@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>客户退货监控</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;background:#f0f2f5;color:#333}
+.header{background:linear-gradient(135deg,#4472c4,#2d5aa0);color:#fff;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 8px rgba(0,0,0,0.15)}
+.header h1{font-size:20px;font-weight:bold;letter-spacing:1px}
+.header .status{font-size:12px;opacity:0.9;background:rgba(255,255,255,0.15);padding:4px 12px;border-radius:12px}
+.container{max-width:1600px;margin:16px auto;padding:0 16px}
+.controls{display:flex;align-items:center;gap:12px;padding:10px 16px;background:#fff;border-radius:8px 8px 0 0;border:1px solid #e0e0e0;border-bottom:none;flex-wrap:wrap}
+.controls label{font-size:12px;color:#666}
+.controls select{padding:4px 8px;border:1px solid #ccc;border-radius:4px;font-size:12px}
+.controls button{padding:6px 16px;border:1px solid #4472c4;border-radius:4px;cursor:pointer;font-size:12px;background:#4472c4;color:#fff}
+.controls button:hover{background:#3568b0}
+.controls .info{margin-left:auto;font-size:11px;color:#999}
+.tab-bar{display:flex;gap:3px;flex-wrap:wrap;border-left:1px solid #e0e0e0;border-right:1px solid #e0e0e0}
+.tab-btn{background:#f0f2f5;color:#555;padding:8px 18px;border:1px solid #d0d0d0;border-bottom:none;
+  border-top-left-radius:8px;border-top-right-radius:8px;cursor:pointer;font-size:13px;transition:all 0.2s;position:relative}
+.tab-btn.active{background:#fff;color:#4472c4;font-weight:bold;border-bottom:2px solid #4472c4}
+.tab-btn:hover{background:#e8f0fe}
+.tab-btn .badge{background:#d9534f;color:#fff;font-size:10px;padding:1px 6px;border-radius:8px;margin-left:4px;font-weight:bold}
+.tab-content{background:#fff;border-radius:0 0 8px 8px;border:1px solid #e0e0e0;overflow:auto;max-height:calc(100vh - 180px)}
+table{width:100%;border-collapse:collapse;font-size:12px;min-width:max-content}
+th{background:#4472c4;color:#fff;padding:10px 12px;text-align:left;font-weight:bold;white-space:nowrap;position:sticky;top:0;z-index:1}
+td{padding:8px 12px;border-bottom:1px solid #e8e8e8;white-space:nowrap}
+td.wrap{white-space:normal;word-break:break-all;max-width:300px}
+tr:hover td{background:#f0f7ff}
+tr.new td{background:#d4edda}
+.empty{text-align:center;padding:80px 20px;color:#999;font-size:15px}
+.popup{position:fixed;top:20px;right:20px;background:#fff;border-left:4px solid #4472c4;padding:16px 20px;
+  border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,0.15);z-index:9999;max-width:400px;
+  animation:slideIn 0.3s ease;transition:opacity 0.3s}
+.popup .title{font-weight:bold;color:#4472c4;margin-bottom:6px;font-size:14px}
+.popup .msg{font-size:12px;color:#555;line-height:1.6;white-space:pre-line}
+.popup .time{font-size:11px;color:#999;margin-top:6px}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>&#128250; 客户退货监控</h1>
+  <div class="status" id="status">连接中...</div>
+</div>
+<div class="container">
+  <div class="controls">
+    <label>自动刷新:</label>
+    <select id="interval" onchange="resetTimer()">
+      <option value="5">5秒</option>
+      <option value="10" selected>10秒</option>
+      <option value="30">30秒</option>
+      <option value="60">60秒</option>
+    </select>
+    <button onclick="fetchData()">&#128260; 刷新</button>
+    <button onclick="toggleWrap()" id="wrapBtn" style="background:#5cb85c;border-color:#5cb85c">&#128240; 自动换行</button>
+    <span class="info" id="info"></span>
+  </div>
+  <div class="tab-bar" id="tabBar"></div>
+  <div class="tab-content" id="tabContent">
+    <div class="empty">加载中...</div>
+  </div>
+</div>
+<div id="popupContainer"></div>
+<script>
+var WEBHOOK_URL="https://www.kdocs.cn/api/v3/ide/file/crPAkvMcti4U/script/V2-3sBN9NKE0PiBdtoSmbE0zI/sync_task";
+var AIRSCRIPT_TOKEN="5QFPalRlOyntsGEzCZ1djw";
+var currentTab="";
+var timer=null;
+var changes={};
+var prevChanges={};
+var wrapMode=false;
+var audioCtx=null;
+
+function playBeep(){
+  try{
+    if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    var osc=audioCtx.createOscillator();var gain=audioCtx.createGain();
+    osc.connect(gain);gain.connect(audioCtx.destination);
+    osc.frequency.value=880;osc.type="sine";gain.gain.value=0.3;
+    osc.start();osc.stop(audioCtx.currentTime+0.15);
+    setTimeout(function(){
+      var o2=audioCtx.createOscillator();var g2=audioCtx.createGain();
+      o2.connect(g2);g2.connect(audioCtx.destination);
+      o2.frequency.value=1100;o2.type="sine";g2.gain.value=0.3;
+      o2.start();o2.stop(audioCtx.currentTime+0.2);
+    },200);
+  }catch(e){}
+}
+
+function showPopup(title,msg){
+  var c=document.getElementById("popupContainer");
+  var d=document.createElement("div");d.className="popup";
+  d.innerHTML='<div class="title">'+esc(title)+'</div><div class="msg">'+esc(msg)+'</div><div class="time">'+new Date().toLocaleTimeString()+'</div>';
+  c.appendChild(d);playBeep();
+  setTimeout(function(){d.style.opacity="0";setTimeout(function(){if(d.parentNode)d.parentNode.removeChild(d)},300)},5000);
+}
+
+function toggleWrap(){
+  wrapMode=!wrapMode;
+  var b=document.getElementById("wrapBtn");
+  b.style.background=wrapMode?"#4472c4":"#5cb85c";
+  b.style.borderColor=wrapMode?"#4472c4":"#5cb85c";
+  b.textContent=wrapMode?"\u2714 换行中":"\ud83d\udcf0 自动换行";
+  renderTable();
+}
+
+function resetTimer(){
+  if(timer)clearTimeout(timer);
+  timer=setTimeout(fetchData,parseInt(document.getElementById("interval").value)*1000);
+}
+
+function fetchData(){
+  var payload=JSON.stringify({Context:{argv:{mode:"rlog"}}});
+  fetch(WEBHOOK_URL,{method:"POST",headers:{"Content-Type":"application/json","AirScript-Token":AIRSCRIPT_TOKEN},body:payload})
+  .then(function(r){return r.json()})
+  .then(function(d){
+    if(d.error){
+      document.getElementById("status").textContent="\u274c "+d.error;
+      resetTimer();return;
+    }
+    var result=(d.data&&d.data.result)||{};
+    prevChanges=JSON.parse(JSON.stringify(changes));
+    var logRaw=result.data||"";
+    if(logRaw){
+      try{changes=JSON.parse(logRaw)}catch(e){changes={}}
+    }else{changes={}}
+    var hasNew=detectNew();
+    document.getElementById("status").textContent="\u2705 \u8fd0\u884c\u4e2d | "+new Date().toLocaleTimeString();
+    document.getElementById("info").textContent="\u66f4\u65b0: "+new Date().toLocaleTimeString();
+    renderTabs();
+    if(hasNew&&"Notification"in window&&Notification.permission==="default")Notification.requestPermission();
+    resetTimer();
+  })
+  .catch(function(e){
+    document.getElementById("status").textContent="\u274c \u8fde\u63a5\u5931\u8d25";
+    resetTimer();
+  });
+}
+
+function detectNew(){
+  var hasNew=false;
+  for(var name in changes){
+    var byRn=changes[name].by_rn||{};
+    var prevRn=(prevChanges[name]&&prevChanges[name].by_rn)||{};
+    var newRows=[];var modRows=[];
+    for(var rn in byRn){
+      if(!prevRn[rn]){newRows.push("\u7b2c"+rn+"\u884c")}
+      else{if(JSON.stringify(byRn[rn])!==JSON.stringify(prevRn[rn]))modRows.push("\u7b2c"+rn+"\u884c")}
+    }
+    if(newRows.length||modRows.length){
+      hasNew=true;var msg="";
+      if(newRows.length)msg+="\ud83d\udcc4 \u65b0\u589e: "+newRows.join(", ");
+      if(modRows.length)msg+=(msg?"\n":"")+"\u270f\ufe0f \u4fee\u6539: "+modRows.join(", ");
+      showPopup("\ud83d\udce3 ["+name+"] \u6709\u53d8\u66f4",msg);
+      try{if(Notification.permission==="granted")new Notification("["+name+"] \u6709\u53d8\u66f4",{body:msg.replace(/\n/g," ")})}catch(e){}
+    }
+  }
+  return hasNew;
+}
+
+function renderTabs(){
+  var bar=document.getElementById("tabBar");
+  var names=Object.keys(changes).sort();
+  if(!names.length){
+    bar.innerHTML="";
+    document.getElementById("tabContent").innerHTML='<div class="empty">\u6682\u65e0\u53d8\u66f4\u8bb0\u5f55<br><br>\u540e\u53f0\u81ea\u52a8\u76d1\u63a7\u4e2d 8:00-20:00</div>';
+    return;
+  }
+  if(!currentTab||!changes[currentTab])currentTab=names[0];
+  var html="";
+  for(var i=0;i<names.length;i++){
+    var n=names[i];var cnt=Object.keys(changes[n].by_rn||{}).length;
+    var prevCnt=prevChanges[n]?Object.keys(prevChanges[n].by_rn||{}).length:0;
+    var badge=cnt>prevCnt?'<span class="badge">'+(cnt-prevCnt)+'</span>':"";
+    html+='<div class="tab-btn'+(n===currentTab?" active":"")+'" onclick="switchTab(\''+esc(n)+'\')">'+esc(n)+" ("+cnt+")"+badge+"</div>";
+  }
+  bar.innerHTML=html;renderTable();
+}
+
+function switchTab(name){currentTab=name;renderTabs()}
+
+function renderTable(){
+  var info=changes[currentTab];
+  if(!info){document.getElementById("tabContent").innerHTML='<div class="empty">\u65e0\u6570\u636e</div>';return}
+  var header=info.header||[];
+  var by_rn=info.by_rn||{};
+  var rns=Object.keys(by_rn).sort(function(a,b){return parseInt(a)-parseInt(b)});
+  if(!rns.length){document.getElementById("tabContent").innerHTML='<div class="empty">\u65e0\u53d8\u66f4</div>';return}
+  var prevRn=(prevChanges[currentTab]&&prevChanges[currentTab].by_rn)||{};
+  var html='<table><thead><tr><th style="width:40px">#</th>';
+  for(var i=0;i<header.length;i++)html+="<th>"+esc(header[i]||"\u5217"+(i+1))+"</th>";
+  html+="</tr></thead><tbody>";
+  for(var j=0;j<rns.length;j++){
+    var row=by_rn[rns[j]]||[];
+    var isNew=!prevRn[rns[j]];
+    var isMod=prevRn[rns[j]]&&JSON.stringify(prevRn[rns[j]])!==JSON.stringify(row);
+    html+='<tr class="'+(isNew||isMod?"new":"")+'">';
+    html+='<td style="color:#999;text-align:center">'+rns[j]+"</td>";
+    for(var k=0;k<header.length;k++){
+      var val=row[k]||"";
+      if(typeof val==="string"&&val.indexOf("=DISPIMG(")===0)val="[\u56fe\u7247]";
+      html+='<td class="'+(wrapMode?"wrap":"")+'" title="'+esc(String(val))+'">'+esc(String(val))+"</td>";
+    }
+    html+="</tr>";
+  }
+  html+="</tbody></table>";
+  document.getElementById("tabContent").innerHTML=html;
+}
+
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+
+if("Notification"in window&&Notification.permission==="default")Notification.requestPermission();
+fetchData();
+</script>
+</body>
+</html>
