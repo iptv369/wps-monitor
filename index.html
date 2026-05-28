@@ -56,6 +56,7 @@ tr.new td{background:#d4edda}
     </select>
     <button onclick="fetchData()">&#128260; 刷新</button>
     <button onclick="toggleWrap()" id="wrapBtn" style="background:#5cb85c;border-color:#5cb85c">&#128240; 自动换行</button>
+    <button onclick="markRead()" id="readBtn" style="background:#5cb85c;border-color:#5cb85c;display:none">&#10003; 标记已读</button>
     <span class="info" id="info"></span>
   </div>
   <div class="tab-bar" id="tabBar"></div>
@@ -191,7 +192,7 @@ function renderTable(){
   var rns=Object.keys(by_rn).sort(function(a,b){return parseInt(a)-parseInt(b)});
   if(!rns.length){document.getElementById("tabContent").innerHTML='<div class="empty">\u65e0\u53d8\u66f4</div>';return}
   var prevRn=(prevChanges[currentTab]&&prevChanges[currentTab].by_rn)||{};
-  var html='<table><thead><tr><th style="width:40px">#</th>';
+  var html='<table><thead><tr><th style="width:40px"><input type="checkbox" id="chkAll" onchange="toggleAll(this)"></th><th style="width:40px">#</th>';
   for(var i=0;i<header.length;i++)html+="<th>"+esc(header[i]||"\u5217"+(i+1))+"</th>";
   html+="</tr></thead><tbody>";
   for(var j=0;j<rns.length;j++){
@@ -199,6 +200,7 @@ function renderTable(){
     var isNew=!prevRn[rns[j]];
     var isMod=prevRn[rns[j]]&&JSON.stringify(prevRn[rns[j]])!==JSON.stringify(row);
     html+='<tr class="'+(isNew||isMod?"new":"")+'">';
+    html+='<td style="text-align:center"><input type="checkbox" class="row-chk" data-rn="'+rns[j]+'"></td>';
     html+='<td style="color:#999;text-align:center">'+rns[j]+"</td>";
     for(var k=0;k<header.length;k++){
       var val=row[k]||"";
@@ -212,6 +214,43 @@ function renderTable(){
 }
 
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+
+function toggleAll(el){
+  var chks=document.querySelectorAll(".row-chk");
+  for(var i=0;i<chks.length;i++)chks[i].checked=el.checked;
+  updateReadBtn();
+}
+
+document.addEventListener("change",function(e){
+  if(e.target.classList&&e.target.classList.contains("row-chk"))updateReadBtn();
+});
+
+function updateReadBtn(){
+  var chks=document.querySelectorAll(".row-chk:checked");
+  document.getElementById("readBtn").style.display=chks.length>0?"inline-block":"none";
+}
+
+function markRead(){
+  if(!currentTab||!changes[currentTab])return;
+  var chks=document.querySelectorAll(".row-chk:checked");
+  if(!chks.length)return;
+  var byRn=changes[currentTab].by_rn||{};
+  var removed=0;
+  for(var i=0;i<chks.length;i++){
+    var rn=chks[i].getAttribute("data-rn");
+    if(rn&&byRn[rn]){delete byRn[rn];removed++}
+  }
+  if(!Object.keys(byRn).length){delete changes[currentTab];currentTab=""}
+  showPopup("\u2705 \u6807\u8bb0\u5df2\u8bfb","\u5df2\u79fb\u9664"+removed+"\u884c");
+  var logData={};
+  for(var name in changes){
+    var info=changes[name];
+    logData[name]={header:info.header||[],by_rn:info.by_rn||{},time:info.time||""};
+  }
+  fetch(API_BASE+"/api/markread",{method:"POST",headers:{"Content-Type":"application/json","ngrok-skip-browser-warning":"true"},body:JSON.stringify(logData)})
+  .catch(function(){});
+  renderTabs();
+}
 
 if("Notification"in window&&Notification.permission==="default")Notification.requestPermission();
 fetchData();
