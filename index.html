@@ -67,6 +67,7 @@ tr.new td{background:#d4edda}
 <script>
 var WEBHOOK_URL="https://www.kdocs.cn/api/v3/ide/file/crPAkvMcti4U/script/V2-3sBN9NKE0PiBdtoSmbE0zI/sync_task";
 var AIRSCRIPT_TOKEN="5QFPalRlOyntsGEzCZ1djw";
+var CORS_PROXY="https://corsproxy.io/?";
 var currentTab="";
 var timer=null;
 var changes={};
@@ -114,7 +115,8 @@ function resetTimer(){
 
 function fetchData(){
   var payload=JSON.stringify({Context:{argv:{mode:"rlog"}}});
-  fetch(WEBHOOK_URL,{method:"POST",headers:{"Content-Type":"application/json","AirScript-Token":AIRSCRIPT_TOKEN},body:payload})
+  var fetchUrl=CORS_PROXY+encodeURIComponent(WEBHOOK_URL);
+  fetch(fetchUrl,{method:"POST",headers:{"Content-Type":"application/json","AirScript-Token":AIRSCRIPT_TOKEN},body:payload})
   .then(function(r){return r.json()})
   .then(function(d){
     if(d.error){
