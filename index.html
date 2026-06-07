@@ -238,11 +238,8 @@
 
 <script>
 // ===== 全局错误处理 =====
-window.onerror = function(msg, url, line) {
-  console.error('JS错误:', msg, line);
-  showToast('错误: ' + msg);
-  return true;
-};
+window.onerror = function(msg, url, line) { console.error('JS错误:', msg, line); showToast('错误: ' + msg); return true; };
+window.addEventListener('unhandledrejection', function(e) { console.error('异步错误:', e.reason); showToast('异步错误: ' + (e.reason && e.reason.message || e.reason)); });
 
 const COLORS = ['#4f46e5','#0891b2','#059669','#d97706','#dc2626','#7c3aed','#db2777','#0d9488','#ca8a04','#6366f1'];
 let allData = [];
@@ -320,7 +317,12 @@ async function loadData() {
     var rawResp = await fetchWithTimeout(getRawUrl() + '?t=' + Date.now(), {}, 8000);
     if (rawResp.ok) {
       var data = await rawResp.json();
-      saveCache(data);
+      // 防止空数据覆盖有效缓存
+      if (data && data.length > 0) {
+        saveCache(data);
+      } else if (cached && cached.length > 0) {
+        data = cached;
+      }
       // 异步获取SHA
       fetchWithTimeout(getApiUrl(), { headers: info.token ? { 'Authorization': 'token ' + info.token } : {} }, 8000)
         .then(function(r) { return r.ok ? r.json() : null; })
@@ -340,7 +342,11 @@ async function loadData() {
       var bytes = new Uint8Array(binaryStr.length);
       for (var i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
       var data = JSON.parse(new TextDecoder('utf-8').decode(bytes));
-      saveCache(data);
+      if (data && data.length > 0) {
+        saveCache(data);
+      } else if (cached && cached.length > 0) {
+        data = cached;
+      }
       return data;
     }
   } catch(e) { console.error('API读取失败', e); }
@@ -555,7 +561,7 @@ function addSkuRow(styleNo, colorName, sizeName, qty) {
   var row = document.createElement('div');
   row.className = 'sku-input-row';
   var sInput = document.createElement('input'); sInput.type='text'; sInput.placeholder='款号'; sInput.className='sku-style'; sInput.style.flex='2'; sInput.value = styleNo||'';
-  var cInput = document.createElement('input'); cInput.type='text'; sInput.placeholder='颜色'; cInput.className='sku-color'; cInput.style.flex='1.5'; cInput.value = colorName||'';
+  var cInput = document.createElement('input'); cInput.type='text'; cInput.placeholder='颜色'; cInput.className='sku-color'; cInput.style.flex='1.5'; cInput.value = colorName||'';
   var zInput = document.createElement('select'); zInput.className='sku-size'; zInput.style.flex='1';
   var sizes = ['','S','M','L','XL','XXL','TU','F'];
   for (var si = 0; si < sizes.length; si++) {
@@ -672,10 +678,15 @@ function fallbackCopy(text) {
 
 async function refreshData() {
   try {
-    allData = await loadData();
+    var data = await loadData();
+    if (data && data.length > 0) {
+      allData = data;
+    } else if (allData.length === 0) {
+      allData = loadCache() || [];
+    }
   } catch(e) {
     console.error('刷新失败:', e);
-    allData = loadCache() || [];
+    if (allData.length === 0) allData = loadCache() || [];
   }
   render();
 }
@@ -930,13 +941,11 @@ document.getElementById('itemList').addEventListener('click', function(e) {
     return;
   }
 
-  // 操作按钮（到货/编辑/删除）- 必须在 sku-row 内
-  var actionBtn = target.closest('.sku-row [data-action]');
-  if (actionBtn) {
+  // 操作按钮（到货/编辑/删除）- 分步检查避免后代选择器兼容问题
+  var actionBtn = target.closest('[data-action]');
+  if (actionBtn && actionBtn.closest('.sku-row')) {
     e.preventDefault();
-    var row = actionBtn.closest('.sku-row');
-    if (!row) return;
-    var id = row.dataset.id;
+    var id = actionBtn.closest('.sku-row').dataset.id;
     var action = actionBtn.dataset.action;
     if (action === 'arrive') markArrived(id);
     else if (action === 'edit') editItem(id);
@@ -948,9 +957,11 @@ document.getElementById('itemList').addEventListener('click', function(e) {
   var header = target.closest('.date-header');
   if (header) {
     var group = header.closest('.date-group');
-    var items = group.querySelector('.date-items');
-    header.classList.toggle('collapsed');
-    items.classList.toggle('collapsed');
+    if (group) {
+      var items = group.querySelector('.date-items');
+      header.classList.toggle('collapsed');
+      if (items) items.classList.toggle('collapsed');
+    }
     return;
   }
 });
@@ -1037,10 +1048,15 @@ function ensureRendered() {
   setTimeout(ensureRendered, 5000);
 
   try {
-    allData = await loadData();
+    var data = await loadData();
+    if (data && data.length > 0) {
+      allData = data;
+    } else if (allData.length === 0) {
+      allData = loadCache() || [];
+    }
   } catch(e) {
     console.error('加载失败:', e);
-    allData = loadCache() || [];
+    if (allData.length === 0) allData = loadCache() || [];
   }
   _initDone = true;
   render();
