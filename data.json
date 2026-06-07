@@ -8,22 +8,9 @@
     "arriveDate": "2026-06-15",
     "supplier": "N",
     "remark": "示例数据",
-    "status": "pending",
+    "status": "arrived",
     "createdAt": "2026-06-06T00:00:00.000Z",
-    "updatedAt": "2026-06-06T00:00:00.000Z"
-  },
-  {
-    "id": "demo2",
-    "colorName": "灰色",
-    "styleNo": "9002",
-    "sizeName": "TU",
-    "qty": 100,
-    "arriveDate": "2026-06-20",
-    "supplier": "SD",
-    "remark": "",
-    "status": "pending",
-    "createdAt": "2026-06-06T00:00:00.000Z",
-    "updatedAt": "2026-06-06T00:00:00.000Z"
+    "updatedAt": "2026-06-07T04:33:34.619Z"
   },
   {
     "id": "mq3abk536efyg",
@@ -37,5 +24,18 @@
     "status": "pending",
     "updatedAt": "2026-06-07T04:31:24.855Z",
     "createdAt": "2026-06-07T04:31:24.855Z"
+  },
+  {
+    "id": "demo2",
+    "colorName": "灰色",
+    "styleNo": "9002",
+    "sizeName": "TU",
+    "qty": 100,
+    "arriveDate": "2026-06-20",
+    "supplier": "SD",
+    "remark": "",
+    "status": "pending",
+    "createdAt": "2026-06-06T00:00:00.000Z",
+    "updatedAt": "2026-06-06T00:00:00.000Z"
   }
 ]
