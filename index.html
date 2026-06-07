@@ -419,7 +419,7 @@ function render() {
           <span class="date-text">${dateDisplay}${dayLabel}</span>
           <span class="date-meta">${group.supplier ? group.supplier + ' · ' : ''}${group.items.length}款 ${totalQty}件${group.remark ? ' · ' + esc(group.remark) : ''}</span>
         </div>
-        <button class="btn-add-sku" onclick="addSkuToDate('${esc(group.date)}','${esc(group.supplier||'')}','${esc(group.remark||'')}')" style="${canEdit?'':'display:none'}">+款</button>
+        <button class="btn-add-sku" data-date="${escAttr(group.date)}" data-supplier="${escAttr(group.supplier||'')}" data-remark="${escAttr(group.remark||'')}" style="${canEdit?'':'display:none'}">+款</button>
       </div>`;
 
     group.items.forEach(item => {
@@ -447,6 +447,7 @@ function render() {
 
 function formatDate(s) { const d = new Date(s+'T00:00:00'); return `${d.getMonth()+1}月${d.getDate()}日 周${'日一二三四五六'[d.getDay()]}`; }
 function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function escAttr(s) { return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 // ===== 弹窗 & SKU行 =====
 let skuRowCount = 0;
@@ -459,9 +460,9 @@ function addSkuRow(styleNo, colorName, sizeName, qty) {
   row.className = 'sku-input-row';
   row.id = `skuRow_${id}`;
   row.innerHTML = `
-    <input type="text" placeholder="款号" value="${styleNo||''}" class="sku-style" style="flex:2">
-    <input type="text" placeholder="颜色" value="${colorName||''}" class="sku-color" style="flex:1.5">
-    <input type="text" placeholder="尺码" value="${sizeName||''}" class="sku-size" style="flex:1">
+    <input type="text" placeholder="款号" value="${escAttr(styleNo)}" class="sku-style" style="flex:2">
+    <input type="text" placeholder="颜色" value="${escAttr(colorName)}" class="sku-color" style="flex:1.5">
+    <input type="text" placeholder="尺码" value="${escAttr(sizeName)}" class="sku-size" style="flex:1">
     <input type="number" placeholder="数量" value="${qty||''}" class="sku-qty" style="flex:1" min="0">
     <button type="button" class="btn-remove" onclick="this.parentElement.remove()">×</button>`;
   container.appendChild(row);
@@ -688,6 +689,11 @@ function parseCSVLine(line) {
 document.getElementById('fabBtn').addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); openModal(); });
 document.getElementById('modalOverlay').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
 document.getElementById('settingsOverlay').addEventListener('click', function(e) { if (e.target === this) closeSettings(); });
+// 事件委托：+款按钮
+document.getElementById('itemList').addEventListener('click', function(e) {
+  const btn = e.target.closest('.btn-add-sku');
+  if (btn) { addSkuToDate(btn.dataset.date, btn.dataset.supplier, btn.dataset.remark); }
+});
 
 // ===== 网络状态 =====
 window.addEventListener('online', () => showToast('网络已恢复'));
