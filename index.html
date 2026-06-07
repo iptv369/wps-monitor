@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>到货期管理</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%234f46e5'/><text x='50' y='68' font-size='50' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'>到</text></svg>">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
   :root { --primary: #4f46e5; --primary-light: #818cf8; --bg: #f8fafc; --card: #ffffff; --text: #1e293b; --text-secondary: #64748b; --border: #e2e8f0; --danger: #ef4444; --success: #22c55e; --warning: #f59e0b; --radius: 12px; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -147,7 +148,7 @@
   <button id="btnTemplate">下载模板</button>
   <button id="btnExport">导出Excel</button>
   <button id="btnImport">导入数据</button>
-  <input type="file" id="importInput" accept=".csv,.json">
+  <input type="file" id="importInput" accept=".csv,.json,.xlsx,.xls">
 </div>
 
 <div class="list" id="itemList"><div class="empty"><div class="icon">📦</div><p>加载中...</p></div></div>
@@ -632,32 +633,140 @@ document.getElementById('btnExport').addEventListener('click', function() {
 document.getElementById('btnImport').addEventListener('click', function() { document.getElementById('importInput').click(); });
 document.getElementById('importInput').addEventListener('change', function(event) {
   var file = event.target.files[0]; if (!file) return;
-  var reader = new FileReader();
-  reader.onload = async function(e) {
-    try {
-      var imported;
-      if (file.name.endsWith('.json')) { imported = JSON.parse(e.target.result); if (!Array.isArray(imported)) throw new Error('JSON格式错误'); }
-      else { imported = parseCSV(e.target.result); }
-      var existingKeys = {};
-      for (var i = 0; i < allData.length; i++) existingKeys[allData[i].styleNo + '_' + (allData[i].colorName||'') + '_' + (allData[i].sizeName||'') + '_' + allData[i].arriveDate] = true;
-      var added = 0;
-      for (var j = 0; j < imported.length; j++) {
-        var item = imported[j];
-        if (!item.styleNo) continue;
-        var key = item.styleNo + '_' + (item.colorName||'') + '_' + (item.sizeName||'') + '_' + item.arriveDate;
-        if (existingKeys[key]) continue;
-        if (!item.id) item.id = genId();
-        item.createdAt = item.createdAt || new Date().toISOString();
-        item.updatedAt = new Date().toISOString();
-        allData.push(item); added++;
-      }
-      await optimisticSave(allData);
-      showToast('导入成功！新增 ' + added + ' 条');
-    } catch(err) { showToast('导入失败：' + err.message); }
-  };
-  reader.readAsText(file, 'utf-8');
+  var isExcel = /\.(xlsx|xls)$/i.test(file.name);
+
+  if (isExcel) {
+    // Excel文件：用SheetJS解析
+    var reader = new FileReader();
+    reader.onload = async function(e) {
+      try {
+        var workbook = XLSX.read(e.target.result, { type: 'array', cellDates: true });
+        var sheet = workbook.Sheets[workbook.SheetNames[0]];
+        var rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+        var imported = parseRows(rows);
+        await doImport(imported);
+      } catch(err) { showToast('导入失败：' + err.message); }
+    };
+    reader.readAsArrayBuffer(file);
+  } else {
+    // CSV/JSON文件
+    var reader = new FileReader();
+    reader.onload = async function(e) {
+      try {
+        var imported;
+        if (file.name.endsWith('.json')) { imported = JSON.parse(e.target.result); if (!Array.isArray(imported)) throw new Error('JSON格式错误'); }
+        else { imported = parseCSV(e.target.result); }
+        await doImport(imported);
+      } catch(err) { showToast('导入失败：' + err.message); }
+    };
+    reader.readAsText(file, 'utf-8');
+  }
   event.target.value = '';
 });
+
+// 通用导入逻辑
+async function doImport(imported) {
+  var existingKeys = {};
+  for (var i = 0; i < allData.length; i++) existingKeys[allData[i].styleNo + '_' + (allData[i].colorName||'') + '_' + (allData[i].sizeName||'') + '_' + allData[i].arriveDate] = true;
+  var added = 0, skipped = 0;
+  for (var j = 0; j < imported.length; j++) {
+    var item = imported[j];
+    if (!item.styleNo) { skipped++; continue; }
+    var key = item.styleNo + '_' + (item.colorName||'') + '_' + (item.sizeName||'') + '_' + item.arriveDate;
+    if (existingKeys[key]) { skipped++; continue; }
+    if (!item.id) item.id = genId();
+    item.createdAt = item.createdAt || new Date().toISOString();
+    item.updatedAt = new Date().toISOString();
+    allData.push(item); added++;
+  }
+  await optimisticSave(allData);
+  showToast('导入成功！新增 ' + added + ' 条' + (skipped > 0 ? '，跳过 ' + skipped + ' 条' : ''));
+}
+
+// 解析二维数组（支持聚水潭预约入库单格式）
+function parseRows(rows) {
+  if (rows.length < 2) throw new Error('表格为空');
+  var headers = rows[0].map(function(h) { return String(h||'').trim(); });
+
+  // 聚水潭预约入库单格式映射
+  var jstMap = {
+    '供应商': 'supplier',
+    '预计到货日期': 'arriveDate',
+    '预约单备注': 'remark',
+    '款式编码': 'styleNo',
+    '颜色及规格': 'colorSize',
+    '预约到货数量': 'qty'
+  };
+
+  // 通用格式映射
+  var generalMap = {
+    '款号': 'styleNo', '款式编码': 'styleNo', 'SKU': 'styleNo',
+    '颜色': 'colorName', '颜色名称': 'colorName',
+    '尺码': 'sizeName', '尺寸': 'sizeName', '规格': 'sizeName',
+    '数量': 'qty', '预约到货数量': 'qty',
+    '预计到货日期': 'arriveDate', '到货日期': 'arriveDate',
+    '供应商': 'supplier',
+    '备注': 'remark', '预约单备注': 'remark',
+    '状态': 'status'
+  };
+
+  // 检测是否为聚水潭格式（有"颜色及规格"列）
+  var isJstFormat = headers.indexOf('颜色及规格') >= 0;
+  var map = isJstFormat ? jstMap : generalMap;
+
+  var fields = headers.map(function(h) { return map[h] || null; });
+  if (fields.indexOf('styleNo') < 0) throw new Error('表格缺少"款号"或"款式编码"列');
+
+  var result = [];
+  for (var i = 1; i < rows.length; i++) {
+    var values = rows[i];
+    if (!values || values.length === 0) continue;
+    var item = {};
+    for (var j = 0; j < fields.length; j++) {
+      if (!fields[j]) continue;
+      var val = values[j];
+      // 处理日期对象
+      if (val instanceof Date) {
+        var y = val.getFullYear();
+        var m = String(val.getMonth() + 1).padStart(2, '0');
+        var d = String(val.getDate()).padStart(2, '0');
+        val = y + '-' + m + '-' + d;
+      }
+      item[fields[j]] = (val === null || val === undefined) ? '' : String(val).trim();
+    }
+    if (!item.styleNo) continue;
+
+    // 聚水潭格式：拆分"颜色及规格"字段（如"黑色;L"→颜色="黑色", 尺码="L"）
+    if (isJstFormat && item.colorSize) {
+      var parts = item.colorSize.split(';');
+      item.colorName = (parts[0] || '').trim();
+      item.sizeName = (parts[1] || '').trim();
+      delete item.colorSize;
+    }
+
+    // 日期格式转换：2026/6/20 → 2026-06-20
+    if (item.arriveDate) {
+      item.arriveDate = normalizeDate(item.arriveDate);
+    }
+
+    if (item.qty) item.qty = parseInt(item.qty) || 0;
+    item.status = (item.status && (item.status.indexOf('已到') >= 0 || item.status === 'arrived')) ? 'arrived' : 'pending';
+    result.push(item);
+  }
+  return result;
+}
+
+// 日期格式标准化
+function normalizeDate(s) {
+  if (!s) return '';
+  s = String(s).trim();
+  // 已经是 YYYY-MM-DD 格式
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  // YYYY/M/D 或 YYYY/M/DD 等格式
+  var m = s.match(/^(\d{4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})/);
+  if (m) return m[1] + '-' + String(m[2]).padStart(2, '0') + '-' + String(m[3]).padStart(2, '0');
+  return s;
+}
 
 document.getElementById('btnSaveSettings').addEventListener('click', function() {
   saveConfig({ repoUrl: document.getElementById('repoUrl').value.trim(), token: document.getElementById('githubToken').value.trim(), branch: document.getElementById('branch').value.trim() || 'main' });
@@ -768,15 +877,31 @@ function parseCSV(text) {
   var lines = text.replace(/^\uFEFF/,'').split(/\r?\n/).filter(function(l){return l.trim();});
   if (lines.length < 2) throw new Error('CSV文件为空');
   var headers = parseCSVLine(lines[0]).map(function(h){return h.trim();});
-  var map = {'款号':'styleNo','款式编码':'styleNo','颜色':'colorName','尺码':'sizeName','尺寸':'sizeName','数量':'qty','预计到货日期':'arriveDate','到货日期':'arriveDate','供应商':'supplier','备注':'remark','状态':'status'};
+
+  // 聚水潭CSV格式映射
+  var jstMap = {'供应商':'supplier','预计到货日期':'arriveDate','预约单备注':'remark','款式编码':'styleNo','颜色及规格':'colorSize','预约到货数量':'qty'};
+  // 通用CSV格式映射
+  var generalMap = {'款号':'styleNo','款式编码':'styleNo','颜色':'colorName','尺码':'sizeName','尺寸':'sizeName','数量':'qty','预约到货数量':'qty','预计到货日期':'arriveDate','到货日期':'arriveDate','供应商':'supplier','备注':'remark','预约单备注':'remark','状态':'status'};
+
+  var isJstFormat = headers.indexOf('颜色及规格') >= 0;
+  var map = isJstFormat ? jstMap : generalMap;
   var fields = headers.map(function(h){return map[h]||null;});
-  if (fields.indexOf('styleNo') < 0) throw new Error('CSV缺少"款号"列');
+  if (fields.indexOf('styleNo') < 0) throw new Error('CSV缺少"款号"或"款式编码"列');
   var result = [];
   for (var i=1;i<lines.length;i++) {
     var values = parseCSVLine(lines[i]);
     if (!values.length || (values.length===1 && !values[0].trim())) continue;
     var item = {};
     for (var j=0;j<fields.length;j++) { if(fields[j]) item[fields[j]] = (values[j]||'').trim(); }
+    if (!item.styleNo) continue;
+    // 聚水潭格式：拆分"颜色及规格"
+    if (isJstFormat && item.colorSize) {
+      var parts = item.colorSize.split(';');
+      item.colorName = (parts[0]||'').trim();
+      item.sizeName = (parts[1]||'').trim();
+      delete item.colorSize;
+    }
+    if (item.arriveDate) item.arriveDate = normalizeDate(item.arriveDate);
     if (item.qty) item.qty = parseInt(item.qty)||0;
     item.status = (item.status && (item.status.indexOf('已到')>=0||item.status==='arrived')) ? 'arrived' : 'pending';
     result.push(item);
