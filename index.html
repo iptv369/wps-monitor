@@ -254,6 +254,14 @@ function getDataUrl() {
   return 'data.json';
 }
 
+// ===== UTF-8 Base64解码 =====
+function decodeBase64UTF8(base64) {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return new TextDecoder('utf-8').decode(bytes);
+}
+
 // ===== 数据读写 =====
 async function loadData() {
   try {
@@ -266,7 +274,7 @@ async function loadData() {
       if (!resp.ok) throw new Error('读取失败: ' + resp.status);
       const result = await resp.json();
       dataSha = result.sha;
-      return JSON.parse(atob(result.content));
+      return JSON.parse(decodeBase64UTF8(result.content));
     } else {
       // 本地读取data.json
       const resp = await fetch('data.json');
