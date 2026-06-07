@@ -30,8 +30,12 @@
   .toolbar button:active { background: #f1f5f9; }
   .list { padding: 0 20px 100px; }
   .date-group { margin-bottom: 16px; }
-  .date-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding: 8px 12px; background: #eef2ff; border-radius: 10px; }
-  .date-header .date-info { display: flex; align-items: center; gap: 8px; }
+  .date-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding: 8px 12px; background: #eef2ff; border-radius: 10px; cursor: pointer; user-select: none; }
+  .date-header .date-info { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
+  .date-header .toggle-icon { font-size: 12px; color: var(--text-secondary); transition: transform 0.2s; flex-shrink: 0; margin-right: 4px; }
+  .date-header.collapsed .toggle-icon { transform: rotate(-90deg); }
+  .date-items { overflow: hidden; transition: max-height 0.3s ease; }
+  .date-items.collapsed { max-height: 0 !important; }
   .date-header .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); }
   .date-header .dot.overdue { background: var(--danger); }
   .date-header .dot.today { background: var(--warning); }
@@ -480,7 +484,9 @@ function _doRender() {
     var totalQty = 0;
     for (var j = 0; j < group.items.length; j++) totalQty += (group.items[j].qty || 0);
 
-    html += '<div class="date-group"><div class="date-header"><div class="date-info">';
+    html += '<div class="date-group" data-group-key="' + escAttr(keys[gi]) + '">';
+    html += '<div class="date-header collapsed" data-action="toggle"><div class="date-info">';
+    html += '<span class="toggle-icon">▼</span>';
     html += '<span class="dot ' + dotClass + '"></span>';
     html += '<span class="date-text">' + escHtml(dateDisplay) + dayLabel + '</span>';
     html += '<span class="date-meta">' + (group.supplier ? escHtml(group.supplier) + ' · ' : '') + group.items.length + '款 ' + totalQty + '件' + (group.remark ? ' · ' + escHtml(group.remark) : '') + '</span>';
@@ -489,6 +495,8 @@ function _doRender() {
       html += '<button class="btn-add-sku" data-date="' + escAttr(group.date) + '" data-supplier="' + escAttr(group.supplier||'') + '" data-remark="' + escAttr(group.remark||'') + '">+款</button>';
     }
     html += '</div>';
+
+    html += '<div class="date-items collapsed">';
 
     for (var ii = 0; ii < group.items.length; ii++) {
       var item = group.items[ii];
@@ -511,7 +519,7 @@ function _doRender() {
       }
       html += '</div>';
     }
-    html += '</div>';
+    html += '</div></div>';
   }
   listEl.innerHTML = html;
 }
@@ -835,13 +843,24 @@ document.getElementById('itemList').addEventListener('click', function(e) {
   // +款按钮
   var addBtn = target.closest('.btn-add-sku');
   if (addBtn) {
+    e.stopPropagation();
     openModal(null, addBtn.dataset.date, addBtn.dataset.supplier, addBtn.dataset.remark);
+    return;
+  }
+
+  // 折叠/展开
+  var header = target.closest('.date-header');
+  if (header && header.dataset.action === 'toggle') {
+    var group = header.closest('.date-group');
+    var items = group.querySelector('.date-items');
+    header.classList.toggle('collapsed');
+    items.classList.toggle('collapsed');
     return;
   }
 
   // 操作按钮
   var actionBtn = target.closest('[data-action]');
-  if (!actionBtn) return;
+  if (!actionBtn || actionBtn.dataset.action === 'toggle') return;
 
   var row = actionBtn.closest('.sku-row');
   if (!row) return;
