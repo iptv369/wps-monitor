@@ -11,18 +11,5 @@
     "status": "pending",
     "createdAt": "2026-06-07T05:58:04.711Z",
     "updatedAt": "2026-06-07T05:58:04.711Z"
-  },
-  {
-    "id": "demo2",
-    "colorName": "灰色",
-    "styleNo": "9002",
-    "sizeName": "TU",
-    "qty": 100,
-    "arriveDate": "2026-06-20",
-    "supplier": "SD",
-    "remark": "",
-    "status": "pending",
-    "createdAt": "2026-06-06T00:00:00.000Z",
-    "updatedAt": "2026-06-06T00:00:00.000Z"
   }
 ]
