@@ -38,27 +38,35 @@
   .toolbar button:active { background: #f1f5f9; }
 
   .list { padding: 0 20px 100px; }
-  .date-group { margin-bottom: 14px; }
-  .date-label { font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
-  .date-label .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); }
-  .date-label .dot.overdue { background: var(--danger); }
-  .date-label .dot.today { background: var(--warning); }
+  .date-group { margin-bottom: 16px; }
+  .date-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding: 8px 12px; background: #eef2ff; border-radius: 10px; }
+  .date-header .date-info { display: flex; align-items: center; gap: 8px; }
+  .date-header .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); }
+  .date-header .dot.overdue { background: var(--danger); }
+  .date-header .dot.today { background: var(--warning); }
+  .date-header .date-text { font-size: 14px; font-weight: 700; color: var(--primary); }
+  .date-header .date-meta { font-size: 11px; color: var(--text-secondary); }
+  .date-header .btn-add-sku { background: var(--primary); color: white; border: none; border-radius: 8px; padding: 4px 10px; font-size: 12px; cursor: pointer; }
 
-  .item-card { background: var(--card); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); display: flex; align-items: center; gap: 10px; }
-  .item-card:active { transform: scale(0.98); }
-  .item-card .color-dot { width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: white; flex-shrink: 0; }
-  .item-card .info { flex: 1; min-width: 0; }
-  .item-card .title { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .item-card .meta { font-size: 12px; color: var(--text-secondary); margin-top: 2px; display: flex; gap: 8px; flex-wrap: wrap; }
-  .item-card .meta span { white-space: nowrap; }
-  .item-card .qty { font-size: 16px; font-weight: 700; color: var(--primary); flex-shrink: 0; }
-  .item-card .qty small { font-size: 11px; font-weight: 400; color: var(--text-secondary); }
-  .item-card .actions { display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; }
-  .item-card .btn-icon { width: 28px; height: 28px; border: none; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; background: transparent; color: var(--text-secondary); }
-  .item-card .btn-icon:active { background: #f1f5f9; }
-  .item-card .btn-icon.del:active { background: #fef2f2; color: var(--danger); }
-  .item-card .btn-arrived { background: var(--success); color: white; border: none; border-radius: 6px; padding: 2px 8px; font-size: 11px; cursor: pointer; white-space: nowrap; }
-  .item-card .btn-arrived:active { opacity: 0.8; }
+  .sku-row { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: var(--card); border-radius: var(--radius); margin-bottom: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+  .sku-row:active { transform: scale(0.98); }
+  .sku-row .color-dot { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: white; flex-shrink: 0; }
+  .sku-row .info { flex: 1; min-width: 0; }
+  .sku-row .title { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sku-row .meta { font-size: 12px; color: var(--text-secondary); margin-top: 2px; display: flex; gap: 6px; flex-wrap: wrap; }
+  .sku-row .meta span { white-space: nowrap; }
+  .sku-row .qty { font-size: 16px; font-weight: 700; color: var(--primary); flex-shrink: 0; }
+  .sku-row .qty small { font-size: 11px; font-weight: 400; color: var(--text-secondary); }
+  .sku-row .actions { display: flex; gap: 2px; flex-shrink: 0; }
+  .sku-row .btn-sm { width: 26px; height: 26px; border: none; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 12px; background: transparent; color: var(--text-secondary); }
+  .sku-row .btn-sm:active { background: #f1f5f9; }
+  .sku-row .btn-sm.del:active { background: #fef2f2; color: var(--danger); }
+  .sku-row .btn-arrived { background: var(--success); color: white; border: none; border-radius: 6px; padding: 2px 8px; font-size: 11px; cursor: pointer; }
+
+  .status-tag { font-size: 11px; padding: 2px 6px; border-radius: 6px; font-weight: 600; }
+  .status-tag.pending { background: #fef3c7; color: #92400e; }
+  .status-tag.arrived { background: #dcfce7; color: #166534; }
+  .status-tag.overdue { background: #fee2e2; color: #991b1b; }
 
   .empty { text-align: center; padding: 50px 20px; color: var(--text-secondary); }
   .empty .icon { font-size: 42px; margin-bottom: 10px; }
@@ -82,18 +90,16 @@
   .form-row .form-group { flex: 1; }
   .btn-submit { width: 100%; padding: 14px; border: none; border-radius: 12px; background: var(--primary); color: white; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 8px; }
   .btn-submit:active { background: var(--primary-light); }
-  .btn-submit:disabled { opacity: 0.5; }
 
-  .status-tag { font-size: 11px; padding: 2px 6px; border-radius: 6px; font-weight: 600; }
-  .status-tag.pending { background: #fef3c7; color: #92400e; }
-  .status-tag.arrived { background: #dcfce7; color: #166534; }
-  .status-tag.overdue { background: #fee2e2; color: #991b1b; }
+  .sku-input-row { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; padding: 8px; background: #f8fafc; border-radius: 8px; }
+  .sku-input-row input { flex: 1; padding: 8px 10px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; outline: none; min-width: 0; }
+  .sku-input-row input:focus { border-color: var(--primary); }
+  .sku-input-row .btn-remove { width: 28px; height: 28px; border: none; border-radius: 6px; background: #fee2e2; color: var(--danger); cursor: pointer; font-size: 14px; flex-shrink: 0; }
+  .btn-add-row { width: 100%; padding: 8px; border: 1.5px dashed var(--border); border-radius: 8px; background: transparent; color: var(--primary); font-size: 13px; cursor: pointer; margin-bottom: 14px; }
 
   #importInput { display: none; }
-
   .toast { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 10px 20px; border-radius: 10px; font-size: 14px; z-index: 99999; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
   .toast.show { opacity: 1; }
-
   .sync-badge { font-size: 11px; background: rgba(255,255,255,0.15); padding: 3px 8px; border-radius: 10px; display: inline-flex; align-items: center; gap: 4px; }
   .sync-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: #4ade80; }
   .sync-badge .dot.saving { background: var(--warning); }
@@ -150,28 +156,8 @@
     <form id="itemForm" onsubmit="saveItem(event)">
       <input type="hidden" id="editId">
       <div class="form-group">
-        <label>款号 *</label>
-        <input type="text" id="styleNo" placeholder="如 A685" required>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label>颜色</label>
-          <input type="text" id="colorName" placeholder="如 黑色">
-        </div>
-        <div class="form-group">
-          <label>尺码</label>
-          <input type="text" id="sizeName" placeholder="如 M / 均码">
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label>数量 *</label>
-          <input type="number" id="qty" placeholder="0" min="0" required>
-        </div>
-        <div class="form-group">
-          <label>预计到货日期 *</label>
-          <input type="date" id="arriveDate" required>
-        </div>
+        <label>预计到货日期 *</label>
+        <input type="date" id="arriveDate" required>
       </div>
       <div class="form-group">
         <label>供应商</label>
@@ -179,7 +165,12 @@
       </div>
       <div class="form-group">
         <label>备注</label>
-        <textarea id="remark" placeholder="备注信息..."></textarea>
+        <input type="text" id="remark" placeholder="备注信息">
+      </div>
+      <div class="form-group">
+        <label>款号明细（可添加多个）</label>
+        <div id="skuRows"></div>
+        <button type="button" class="btn-add-row" onclick="addSkuRow()">+ 添加款号</button>
       </div>
       <div class="form-group">
         <label>状态</label>
@@ -226,18 +217,12 @@ const COLORS = ['#4f46e5','#0891b2','#059669','#d97706','#dc2626','#7c3aed','#db
 let allData = [];
 let currentFilter = 'all';
 let searchQuery = '';
-let dataSha = null; // GitHub文件SHA，用于更新
+let dataSha = null;
 let isSaving = false;
 
 // ===== 配置 =====
-function getConfig() {
-  try { return JSON.parse(localStorage.getItem('arrival_config') || '{}'); }
-  catch { return {}; }
-}
-
-function saveConfig(config) {
-  localStorage.setItem('arrival_config', JSON.stringify(config));
-}
+function getConfig() { try { return JSON.parse(localStorage.getItem('arrival_config') || '{}'); } catch { return {}; } }
+function saveConfig(config) { localStorage.setItem('arrival_config', JSON.stringify(config)); }
 
 function getRepoInfo() {
   const config = getConfig();
@@ -247,18 +232,23 @@ function getRepoInfo() {
   return { owner: match[1], repo: match[2].replace(/\.git$/, ''), branch: config.branch || 'main', token: config.token || '' };
 }
 
-function getDataUrl() {
+function getApiUrl() {
   const info = getRepoInfo();
   if (info) return `https://api.github.com/repos/${info.owner}/${info.repo}/contents/data.json?ref=${info.branch}`;
-  // 本地开发用
+  return 'data.json';
+}
+
+function getRawUrl() {
+  const info = getRepoInfo();
+  if (info) return `https://raw.githubusercontent.com/${info.owner}/${info.repo}/${info.branch}/data.json`;
   return 'data.json';
 }
 
 // ===== UTF-8 Base64解码 =====
 function decodeBase64UTF8(base64) {
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  const binaryStr = atob(base64);
+  const bytes = new Uint8Array(binaryStr.length);
+  for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
   return new TextDecoder('utf-8').decode(bytes);
 }
 
@@ -267,16 +257,25 @@ async function loadData() {
   try {
     const info = getRepoInfo();
     if (info) {
-      // 从GitHub API读取
-      const resp = await fetch(getDataUrl(), {
-        headers: info.token ? { 'Authorization': `token ${info.token}` } : {}
-      });
+      // 优先用raw URL读取（避免base64编码问题）
+      try {
+        const rawResp = await fetch(getRawUrl() + '?t=' + Date.now());
+        if (rawResp.ok) {
+          const data = await rawResp.json();
+          // 同时获取SHA用于后续写入
+          const apiResp = await fetch(getApiUrl(), { headers: info.token ? { 'Authorization': `token ${info.token}` } : {} });
+          if (apiResp.ok) { const r = await apiResp.json(); dataSha = r.sha; }
+          return data;
+        }
+      } catch (e) { console.warn('raw读取失败，尝试API'); }
+
+      // 降级用API读取
+      const resp = await fetch(getApiUrl(), { headers: info.token ? { 'Authorization': `token ${info.token}` } : {} });
       if (!resp.ok) throw new Error('读取失败: ' + resp.status);
       const result = await resp.json();
       dataSha = result.sha;
       return JSON.parse(decodeBase64UTF8(result.content));
     } else {
-      // 本地读取data.json
       const resp = await fetch('data.json');
       if (!resp.ok) return [];
       return await resp.json();
@@ -290,36 +289,14 @@ async function loadData() {
 
 async function saveDataToRemote(data) {
   const info = getRepoInfo();
-  if (!info || !info.token) {
-    showToast('未配置GitHub Token，数据仅保存在本地');
-    localStorage.setItem('arrival_data_local', JSON.stringify(data));
-    return true;
-  }
-
+  if (!info || !info.token) { showToast('未配置GitHub Token，数据仅保存在本地'); localStorage.setItem('arrival_data_local', JSON.stringify(data)); return true; }
   setSyncStatus('saving');
   try {
-    const content = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
-    const body = {
-      message: `更新到货期数据 ${new Date().toLocaleString('zh-CN')}`,
-      content: content,
-      sha: dataSha,
-      branch: info.branch
-    };
-
-    const resp = await fetch(getDataUrl(), {
-      method: 'PUT',
-      headers: {
-        'Authorization': `token ${info.token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(body)
-    });
-
-    if (!resp.ok) {
-      const err = await resp.json();
-      throw new Error(err.message || '保存失败');
-    }
-
+    const jsonStr = JSON.stringify(data, null, 2);
+    const content = btoa(unescape(encodeURIComponent(jsonStr)));
+    const body = { message: `更新到货期数据 ${new Date().toLocaleString('zh-CN')}`, content: content, sha: dataSha, branch: info.branch };
+    const resp = await fetch(getApiUrl(), { method: 'PUT', headers: { 'Authorization': `token ${info.token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    if (!resp.ok) { const err = await resp.json(); throw new Error(err.message || '保存失败'); }
     const result = await resp.json();
     dataSha = result.content.sha;
     setSyncStatus('synced');
@@ -328,7 +305,6 @@ async function saveDataToRemote(data) {
     console.error('保存失败:', err);
     showToast('保存失败: ' + err.message);
     setSyncStatus('error');
-    // 降级到本地存储
     localStorage.setItem('arrival_data_local', JSON.stringify(data));
     return false;
   }
@@ -347,13 +323,12 @@ function getColorForStyle(s) { let h = 0; for (let i = 0; i < s.length; i++) h =
 
 // ===== 渲染 =====
 function render() {
-  const data = allData;
   const today = new Date().toISOString().split('T')[0];
   const weekEnd = new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0];
-  const total = data.length;
-  const pending = data.filter(d => d.status === 'pending').length;
-  const overdue = data.filter(d => d.status === 'pending' && d.arriveDate < today).length;
-  const arrived = data.filter(d => d.status === 'arrived').length;
+  const total = allData.length;
+  const pending = allData.filter(d => d.status === 'pending').length;
+  const overdue = allData.filter(d => d.status === 'pending' && d.arriveDate < today).length;
+  const arrived = allData.filter(d => d.status === 'arrived').length;
 
   document.getElementById('statsBar').innerHTML = `
     <div class="stat-card"><div class="num">${total}</div><div class="label">总记录</div></div>
@@ -361,11 +336,11 @@ function render() {
     <div class="stat-card"><div class="num" style="color:var(--danger)">${overdue}</div><div class="label">已逾期</div></div>
     <div class="stat-card"><div class="num" style="color:var(--success)">${arrived}</div><div class="label">已到货</div></div>`;
 
-  let filtered = data;
-  if (currentFilter === 'overdue') filtered = data.filter(d => d.status === 'pending' && d.arriveDate < today);
-  else if (currentFilter === 'today') filtered = data.filter(d => d.arriveDate === today);
-  else if (currentFilter === 'week') filtered = data.filter(d => d.arriveDate >= today && d.arriveDate <= weekEnd && d.status === 'pending');
-  else if (currentFilter === 'arrived') filtered = data.filter(d => d.status === 'arrived');
+  let filtered = allData;
+  if (currentFilter === 'overdue') filtered = allData.filter(d => d.status === 'pending' && d.arriveDate < today);
+  else if (currentFilter === 'today') filtered = allData.filter(d => d.arriveDate === today);
+  else if (currentFilter === 'week') filtered = allData.filter(d => d.arriveDate >= today && d.arriveDate <= weekEnd && d.status === 'pending');
+  else if (currentFilter === 'arrived') filtered = allData.filter(d => d.status === 'arrived');
 
   if (searchQuery) {
     const q = searchQuery.toLowerCase();
@@ -381,8 +356,13 @@ function render() {
     return (a.arriveDate||'').localeCompare(b.arriveDate||'');
   });
 
+  // 按日期+供应商+备注分组
   const groups = {};
-  filtered.forEach(item => { const key = item.arriveDate || '未设定'; if (!groups[key]) groups[key] = []; groups[key].push(item); });
+  filtered.forEach(item => {
+    const key = `${item.arriveDate||'未设定'}_${item.supplier||''}_${item.remark||''}`;
+    if (!groups[key]) groups[key] = { date: item.arriveDate || '未设定', supplier: item.supplier, remark: item.remark, status: item.status, items: [] };
+    groups[key].items.push(item);
+  });
 
   const listEl = document.getElementById('itemList');
   if (filtered.length === 0) {
@@ -391,33 +371,41 @@ function render() {
   }
 
   let html = '';
-  for (const [date, items] of Object.entries(groups)) {
-    const isOverdue = date < today && date !== '未设定';
-    const isToday = date === today;
+  for (const [key, group] of Object.entries(groups)) {
+    const isOverdue = group.date < today && group.date !== '未设定';
+    const isToday = group.date === today;
     const dotClass = isOverdue ? 'overdue' : isToday ? 'today' : '';
-    const dateDisplay = date === '未设定' ? '未设定日期' : formatDate(date);
-    const dayLabel = isToday ? ' (今天)' : isOverdue ? ' (逾期)' : '';
-    html += `<div class="date-group"><div class="date-label"><span class="dot ${dotClass}"></span>${dateDisplay}${dayLabel}</div>`;
-    items.forEach(item => {
+    const dateDisplay = group.date === '未设定' ? '未设定日期' : formatDate(group.date);
+    const dayLabel = isToday ? ' 今天' : isOverdue ? ' 逾期' : '';
+    const totalQty = group.items.reduce((s, i) => s + (i.qty || 0), 0);
+    const allArrived = group.items.every(i => i.status === 'arrived');
+
+    html += `<div class="date-group">
+      <div class="date-header">
+        <div class="date-info">
+          <span class="dot ${dotClass}"></span>
+          <span class="date-text">${dateDisplay}${dayLabel}</span>
+          <span class="date-meta">${group.supplier ? group.supplier + ' · ' : ''}${group.items.length}款 ${totalQty}件${group.remark ? ' · ' + esc(group.remark) : ''}</span>
+        </div>
+        <button class="btn-add-sku" onclick="addSkuToDate('${esc(group.date)}','${esc(group.supplier||'')}','${esc(group.remark||'')}')">+款</button>
+      </div>`;
+
+    group.items.forEach(item => {
       const color = getColorForStyle(item.styleNo || '');
       const initial = (item.styleNo || '?').charAt(0).toUpperCase();
       const statusClass = item.status === 'arrived' ? 'arrived' : isOverdue ? 'overdue' : 'pending';
       const statusText = item.status === 'arrived' ? '已到货' : isOverdue ? '逾期' : '待到货';
-      html += `<div class="item-card">
+      html += `<div class="sku-row">
         <div class="color-dot" style="background:${color}">${initial}</div>
         <div class="info">
           <div class="title">${esc(item.styleNo||'')} ${esc(item.colorName||'')} ${item.sizeName ? esc(item.sizeName) : ''}</div>
-          <div class="meta">
-            ${item.supplier ? `<span>${esc(item.supplier)}</span>` : ''}
-            <span class="status-tag ${statusClass}">${statusText}</span>
-            ${item.remark ? `<span>${esc(item.remark)}</span>` : ''}
-          </div>
+          <div class="meta"><span class="status-tag ${statusClass}">${statusText}</span></div>
         </div>
         <div class="qty">${item.qty}<small>件</small></div>
         <div class="actions">
           ${item.status === 'pending' ? `<button class="btn-arrived" onclick="markArrived('${item.id}')">到货</button>` : ''}
-          <button class="btn-icon" onclick="editItem('${item.id}')">✏️</button>
-          <button class="btn-icon del" onclick="deleteItem('${item.id}')">🗑️</button>
+          <button class="btn-sm" onclick="editItem('${item.id}')">✏️</button>
+          <button class="btn-sm del" onclick="deleteItem('${item.id}')">🗑</button>
         </div>
       </div>`;
     });
@@ -429,27 +417,57 @@ function render() {
 function formatDate(s) { const d = new Date(s+'T00:00:00'); return `${d.getMonth()+1}月${d.getDate()}日 周${'日一二三四五六'[d.getDay()]}`; }
 function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 
-// ===== 弹窗 =====
-function openModal(item) {
+// ===== 弹窗 & SKU行 =====
+let skuRowCount = 0;
+
+function addSkuRow(styleNo, colorName, sizeName, qty) {
+  skuRowCount++;
+  const id = skuRowCount;
+  const container = document.getElementById('skuRows');
+  const row = document.createElement('div');
+  row.className = 'sku-input-row';
+  row.id = `skuRow_${id}`;
+  row.innerHTML = `
+    <input type="text" placeholder="款号" value="${styleNo||''}" class="sku-style" style="flex:2">
+    <input type="text" placeholder="颜色" value="${colorName||''}" class="sku-color" style="flex:1.5">
+    <input type="text" placeholder="尺码" value="${sizeName||''}" class="sku-size" style="flex:1">
+    <input type="number" placeholder="数量" value="${qty||''}" class="sku-qty" style="flex:1" min="0">
+    <button type="button" class="btn-remove" onclick="this.parentElement.remove()">×</button>`;
+  container.appendChild(row);
+}
+
+function openModal(item, presetDate, presetSupplier, presetRemark) {
   document.getElementById('modalOverlay').classList.add('active');
   document.getElementById('editId').value = item ? item.id : '';
   document.getElementById('modalTitle').textContent = item ? '编辑到货记录' : '添加到货记录';
   document.getElementById('submitBtn').textContent = item ? '保存' : '添加';
+  document.getElementById('skuRows').innerHTML = '';
+  skuRowCount = 0;
+
   if (item) {
-    document.getElementById('styleNo').value = item.styleNo || '';
-    document.getElementById('colorName').value = item.colorName || '';
-    document.getElementById('sizeName').value = item.sizeName || '';
-    document.getElementById('qty').value = item.qty || '';
     document.getElementById('arriveDate').value = item.arriveDate || '';
     document.getElementById('supplier').value = item.supplier || '';
     document.getElementById('remark').value = item.remark || '';
     document.getElementById('status').value = item.status || 'pending';
+    addSkuRow(item.styleNo, item.colorName, item.sizeName, item.qty);
   } else {
     document.getElementById('itemForm').reset();
-    document.getElementById('arriveDate').value = new Date().toISOString().split('T')[0];
+    document.getElementById('arriveDate').value = presetDate || new Date().toISOString().split('T')[0];
+    document.getElementById('supplier').value = presetSupplier || '';
+    document.getElementById('remark').value = presetRemark || '';
+    document.getElementById('status').value = 'pending';
+    addSkuRow('', '', '', '');
   }
 }
+
 function closeModal() { document.getElementById('modalOverlay').classList.remove('active'); }
+
+// 给某个日期组添加款号
+function addSkuToDate(date, supplier, remark) {
+  openModal(null, date, supplier, remark);
+  // 默认添加一个空行
+  // 已经在openModal里addSkuRow了
+}
 
 // ===== 设置 =====
 function openSettings() {
@@ -460,16 +478,10 @@ function openSettings() {
   document.getElementById('settingsOverlay').classList.add('active');
 }
 function closeSettings() { document.getElementById('settingsOverlay').classList.remove('active'); }
-
 function saveSettings() {
-  const config = {
-    repoUrl: document.getElementById('repoUrl').value.trim(),
-    token: document.getElementById('githubToken').value.trim(),
-    branch: document.getElementById('branch').value.trim() || 'main'
-  };
-  saveConfig(config);
+  saveConfig({ repoUrl: document.getElementById('repoUrl').value.trim(), token: document.getElementById('githubToken').value.trim(), branch: document.getElementById('branch').value.trim() || 'main' });
   closeSettings();
-  showToast('设置已保存，正在重新加载数据...');
+  showToast('设置已保存，正在重新加载...');
   refreshData();
 }
 
@@ -480,25 +492,39 @@ async function saveItem(e) {
   isSaving = true;
 
   const editId = document.getElementById('editId').value;
-  const item = {
-    id: editId || genId(),
-    styleNo: document.getElementById('styleNo').value.trim(),
-    colorName: document.getElementById('colorName').value.trim(),
-    sizeName: document.getElementById('sizeName').value.trim(),
-    qty: parseInt(document.getElementById('qty').value) || 0,
-    arriveDate: document.getElementById('arriveDate').value,
-    supplier: document.getElementById('supplier').value.trim(),
-    remark: document.getElementById('remark').value.trim(),
-    status: document.getElementById('status').value,
-    updatedAt: new Date().toISOString(),
-  };
-  if (!editId) item.createdAt = new Date().toISOString();
+  const arriveDate = document.getElementById('arriveDate').value;
+  const supplier = document.getElementById('supplier').value.trim();
+  const remark = document.getElementById('remark').value.trim();
+  const status = document.getElementById('status').value;
+
+  // 收集所有SKU行
+  const skuRows = document.querySelectorAll('#skuRows .sku-input-row');
+  const items = [];
+  skuRows.forEach(row => {
+    const styleNo = row.querySelector('.sku-style').value.trim();
+    const colorName = row.querySelector('.sku-color').value.trim();
+    const sizeName = row.querySelector('.sku-size').value.trim();
+    const qty = parseInt(row.querySelector('.sku-qty').value) || 0;
+    if (!styleNo) return;
+    items.push({ styleNo, colorName, sizeName, qty });
+  });
+
+  if (items.length === 0) { showToast('请至少填写一个款号'); isSaving = false; return; }
 
   if (editId) {
+    // 编辑模式：更新单条
     const idx = allData.findIndex(d => d.id === editId);
-    if (idx >= 0) allData[idx] = item;
+    if (idx >= 0) {
+      allData[idx] = { ...allData[idx], styleNo: items[0].styleNo, colorName: items[0].colorName, sizeName: items[0].sizeName, qty: items[0].qty, arriveDate, supplier, remark, status, updatedAt: new Date().toISOString() };
+    }
   } else {
-    allData.push(item);
+    // 新增模式：每个SKU一条记录
+    items.forEach(item => {
+      allData.push({
+        id: genId(), styleNo: item.styleNo, colorName: item.colorName, sizeName: item.sizeName, qty: item.qty,
+        arriveDate, supplier, remark, status, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
+      });
+    });
   }
 
   const ok = await saveDataToRemote(allData);
@@ -528,11 +554,7 @@ async function markArrived(id) {
   isSaving = false;
 }
 
-// ===== 刷新 =====
-async function refreshData() {
-  allData = await loadData();
-  render();
-}
+async function refreshData() { allData = await loadData(); render(); }
 
 // ===== 筛选 =====
 document.getElementById('filterTabs').addEventListener('click', e => {
@@ -552,19 +574,12 @@ document.getElementById('searchInput').addEventListener('input', e => {
 });
 
 // ===== Toast =====
-function showToast(msg) {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 3000);
-}
+function showToast(msg) { const el = document.getElementById('toast'); el.textContent = msg; el.classList.add('show'); setTimeout(() => el.classList.remove('show'), 3000); }
 
 // ===== 导入导出 =====
 function downloadTemplate() {
   const csv = '\uFEFF款号,颜色,尺码,数量,预计到货日期,供应商,备注,状态\nA685,黑色,M,50,2026-06-15,N,加单,待到货\n9002,灰色,TU,100,2026-06-20,SD,,待到货\n';
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
-  a.download = '到货期导入模板.csv'; a.click();
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = '到货期导入模板.csv'; a.click();
 }
 
 function exportCSV() {
@@ -576,14 +591,11 @@ function exportCSV() {
     const row = keys.map(k => { let v = (item[k]||'').toString(); if (v.includes(',')||v.includes('\n')||v.includes('"')) v = '"'+v.replace(/"/g,'""')+'"'; return v; });
     csv += row.join(',') + '\n';
   });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
-  a.download = `到货期数据_${new Date().toISOString().split('T')[0]}.csv`; a.click();
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = `到货期数据_${new Date().toISOString().split('T')[0]}.csv`; a.click();
 }
 
 async function importData(event) {
-  const file = event.target.files[0];
-  if (!file) return;
+  const file = event.target.files[0]; if (!file) return;
   const reader = new FileReader();
   reader.onload = async (e) => {
     try {
@@ -599,8 +611,7 @@ async function importData(event) {
         if (!item.id) item.id = genId();
         item.createdAt = item.createdAt || new Date().toISOString();
         item.updatedAt = new Date().toISOString();
-        allData.push(item);
-        added++;
+        allData.push(item); added++;
       });
       await saveDataToRemote(allData);
       render();
@@ -649,18 +660,9 @@ document.getElementById('settingsOverlay').addEventListener('click', function(e)
 // ===== 初始化 =====
 (async function init() {
   const config = getConfig();
-  // 如果没有配置，提示设置
-  if (!config.repoUrl) {
-    allData = await loadData();
-    render();
-    // 首次使用，提示设置
-    if (allData.length <= 2) {
-      showToast('请先点击「设置」配置GitHub仓库地址和Token');
-    }
-  } else {
-    allData = await loadData();
-    render();
-  }
+  allData = await loadData();
+  render();
+  if (!config.repoUrl && allData.length <= 2) showToast('请先点击「设置」配置GitHub仓库地址和Token');
 })();
 </script>
 </body>
