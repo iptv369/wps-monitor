@@ -24,5 +24,18 @@
     "status": "pending",
     "createdAt": "2026-06-06T00:00:00.000Z",
     "updatedAt": "2026-06-06T00:00:00.000Z"
+  },
+  {
+    "id": "demo1",
+    "styleNo": "A685",
+    "colorName": "黑色",
+    "sizeName": "M",
+    "qty": 50,
+    "arriveDate": "2026-06-15",
+    "supplier": "N",
+    "remark": "示例数据",
+    "status": "arrived",
+    "createdAt": "2026-06-06T00:00:00.000Z",
+    "updatedAt": "2026-06-07T04:33:34.619Z"
   }
 ]
