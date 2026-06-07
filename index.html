@@ -115,7 +115,8 @@
       <span class="sync-badge"><span class="dot" id="syncDot"></span><span id="syncText">已同步</span></span>
     </div>
   </div>
-  <div style="display:flex;gap:8px">
+  <div style="display:flex;gap:8px;align-items:center">
+    <span id="netIcon" style="font-size:18px;cursor:pointer" title="网络状态">&#127760;</span>
     <button class="header-btn" onclick="refreshData()">刷新</button>
     <button class="header-btn" onclick="openSettings()">设置</button>
   </div>
@@ -664,10 +665,27 @@ document.getElementById('fabBtn').addEventListener('click', e => { e.preventDefa
 document.getElementById('modalOverlay').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
 document.getElementById('settingsOverlay').addEventListener('click', function(e) { if (e.target === this) closeSettings(); });
 
+// ===== 网络状态 =====
+function updateNetStatus() {
+  const el = document.getElementById('netIcon');
+  if (navigator.onLine) {
+    el.innerHTML = '&#127760;'; // 🌐
+    el.title = '网络已连接';
+    el.style.opacity = '1';
+  } else {
+    el.innerHTML = '&#128268;'; // 🔌
+    el.title = '网络已断开';
+    el.style.opacity = '0.5';
+  }
+}
+window.addEventListener('online', () => { updateNetStatus(); showToast('网络已恢复'); });
+window.addEventListener('offline', () => { updateNetStatus(); showToast('网络已断开'); });
+
 // ===== 初始化 =====
 (async function init() {
   const config = getConfig();
   canEdit = !!(config.token);
+  updateNetStatus();
   allData = await loadData();
   render();
   if (!config.repoUrl && allData.length <= 2) showToast('请先点击「设置」配置GitHub仓库地址和Token');
