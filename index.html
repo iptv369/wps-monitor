@@ -80,6 +80,7 @@
   .btn-submit:active { background: var(--primary-light); }
   .sku-input-row { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; padding: 8px; background: #f8fafc; border-radius: 8px; }
   .sku-input-row input { flex: 1; padding: 8px 10px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; outline: none; min-width: 0; }
+  .sku-input-row select { flex: 1; padding: 8px 6px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; outline: none; min-width: 0; background: var(--card); color: var(--text); -webkit-appearance: none; }
   .sku-input-row input:focus { border-color: var(--primary); }
   .sku-input-row .btn-remove { width: 28px; height: 28px; border: none; border-radius: 6px; background: #fee2e2; color: var(--danger); cursor: pointer; font-size: 14px; flex-shrink: 0; }
   .btn-add-row { width: 100%; padding: 8px; border: 1.5px dashed var(--border); border-radius: 8px; background: transparent; color: var(--primary); font-size: 13px; cursor: pointer; margin-bottom: 14px; }
@@ -534,8 +535,13 @@ function addSkuRow(styleNo, colorName, sizeName, qty) {
   var row = document.createElement('div');
   row.className = 'sku-input-row';
   var sInput = document.createElement('input'); sInput.type='text'; sInput.placeholder='款号'; sInput.className='sku-style'; sInput.style.flex='2'; sInput.value = styleNo||'';
-  var cInput = document.createElement('input'); cInput.type='text'; cInput.placeholder='颜色'; cInput.className='sku-color'; cInput.style.flex='1.5'; cInput.value = colorName||'';
-  var zInput = document.createElement('input'); zInput.type='text'; zInput.placeholder='尺码'; zInput.className='sku-size'; zInput.style.flex='1'; zInput.value = sizeName||'';
+  var cInput = document.createElement('input'); cInput.type='text'; sInput.placeholder='颜色'; cInput.className='sku-color'; cInput.style.flex='1.5'; cInput.value = colorName||'';
+  var zInput = document.createElement('select'); zInput.className='sku-size'; zInput.style.flex='1';
+  var sizes = ['','S','M','L','XL','XXL','TU','F'];
+  for (var si = 0; si < sizes.length; si++) {
+    var opt = document.createElement('option'); opt.value = sizes[si]; opt.textContent = sizes[si] || '尺码'; zInput.appendChild(opt);
+  }
+  zInput.value = sizeName || '';
   var qInput = document.createElement('input'); qInput.type='number'; qInput.placeholder='数量'; qInput.className='sku-qty'; qInput.style.flex='1'; qInput.min='0'; qInput.value = qty||'';
   var rmBtn = document.createElement('button'); rmBtn.type='button'; rmBtn.className='btn-remove'; rmBtn.textContent='×';
   rmBtn.addEventListener('click', function() { row.remove(); });
