@@ -1,15 +1,15 @@
 [
   {
-    "id": "mq3g0xmf2ircr",
-    "styleNo": "396",
+    "id": "mq3g4q6edncj9",
+    "styleNo": "006",
     "colorName": "红色",
     "sizeName": "M",
     "qty": 80,
     "arriveDate": "2026-06-07",
     "supplier": "N",
-    "remark": "加单",
+    "remark": "",
     "status": "pending",
-    "createdAt": "2026-06-07T07:11:06.807Z",
-    "updatedAt": "2026-06-07T07:11:06.807Z"
+    "createdAt": "2026-06-07T07:14:03.783Z",
+    "updatedAt": "2026-06-07T07:14:03.783Z"
   }
 ]
