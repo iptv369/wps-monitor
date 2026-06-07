@@ -484,8 +484,9 @@ function _doRender() {
     var totalQty = 0;
     for (var j = 0; j < group.items.length; j++) totalQty += (group.items[j].qty || 0);
 
+    var collapsedClass = searchQuery ? '' : ' collapsed';
     html += '<div class="date-group" data-group-key="' + escAttr(keys[gi]) + '">';
-    html += '<div class="date-header collapsed" data-action="toggle"><div class="date-info">';
+    html += '<div class="date-header' + collapsedClass + '" data-action="toggle"><div class="date-info">';
     html += '<span class="toggle-icon">▼</span>';
     html += '<span class="dot ' + dotClass + '"></span>';
     html += '<span class="date-text">' + escHtml(dateDisplay) + dayLabel + '</span>';
@@ -496,7 +497,7 @@ function _doRender() {
     }
     html += '</div>';
 
-    html += '<div class="date-items collapsed">';
+    html += '<div class="date-items' + collapsedClass + '">';
 
     for (var ii = 0; ii < group.items.length; ii++) {
       var item = group.items[ii];
