@@ -42,6 +42,8 @@
   .date-header .date-text { font-size: 14px; font-weight: 700; color: var(--primary); }
   .date-header .date-meta { font-size: 11px; color: var(--text-secondary); }
   .date-header .btn-add-sku { background: var(--primary); color: white; border: none; border-radius: 8px; padding: 4px 10px; font-size: 12px; cursor: pointer; }
+  .date-header .btn-forward { background: var(--success); color: white; border: none; border-radius: 8px; padding: 4px 10px; font-size: 12px; cursor: pointer; }
+  .date-header-btns { display: flex; gap: 6px; flex-shrink: 0; }
   .sku-row { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: var(--card); border-radius: var(--radius); margin-bottom: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
   .sku-row .color-dot { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: white; flex-shrink: 0; }
   .sku-row .info { flex: 1; min-width: 0; }
@@ -151,7 +153,6 @@
 </div>
 
 <div class="toolbar" id="toolbar">
-  <button id="btnForward">转发近3天</button>
   <button id="btnTemplate">下载模板</button>
   <button id="btnExport">导出Excel</button>
   <button id="btnImport">导入数据</button>
@@ -504,9 +505,12 @@ function _doRender() {
     html += '<span class="date-text">' + escHtml(dateDisplay) + dayLabel + '</span>';
     html += '<span class="date-meta">' + (group.supplier ? escHtml(group.supplier) + ' · ' : '') + group.items.length + '款 ' + totalQty + '件' + (group.remark ? ' · ' + escHtml(group.remark) : '') + '</span>';
     html += '</div>';
+    html += '<div class="date-header-btns">';
+    html += '<button class="btn-forward" data-action="forward" data-date="' + escAttr(group.date) + '" data-supplier="' + escAttr(group.supplier||'') + '" data-remark="' + escAttr(group.remark||'') + '">转发</button>';
     if (canEdit) {
       html += '<button class="btn-add-sku" data-date="' + escAttr(group.date) + '" data-supplier="' + escAttr(group.supplier||'') + '" data-remark="' + escAttr(group.remark||'') + '">+款</button>';
     }
+    html += '</div>';
     html += '</div>';
 
     html += '<div class="date-items' + collapsedClass + '">';
@@ -616,50 +620,49 @@ async function markArrived(id) {
   isSaving = false;
 }
 
-// ===== 转发近3天数据 =====
-function forwardData() {
-  var today = new Date().toISOString().split('T')[0];
-  var weekEnd = new Date(Date.now() + 3 * 86400000).toISOString().split('T')[0];
-  var items = allData.filter(function(d) { return d.arriveDate >= today && d.arriveDate <= weekEnd && d.status === 'pending'; });
+// ===== 转发单个供应商组 =====
+function forwardGroup(date, supplier, remark) {
+  var items = allData.filter(function(d) {
+    return d.arriveDate === date && (d.supplier||'') === supplier && (d.remark||'') === remark && d.status === 'pending';
+  });
 
-  if (items.length === 0) { showToast('近3天没有待到货记录'); return; }
+  if (items.length === 0) { showToast('没有待到货记录'); return; }
 
-  // 按供应商+日期分组
-  var groups = {};
-  for (var i = 0; i < items.length; i++) {
-    var item = items[i];
-    var key = (item.supplier || '未指定') + '|' + item.arriveDate;
-    if (!groups[key]) groups[key] = { supplier: item.supplier || '未指定', date: item.arriveDate, items: [] };
-    groups[key].items.push(item);
+  var dateDisplay = date === '未设定' ? '未设定日期' : formatDate(date);
+  var text = '📦 ' + dateDisplay + ' · ' + (supplier || '未指定供应商') + '\n';
+  if (remark) text += '备注：' + remark + '\n';
+  text += '\n';
+  var totalQty = 0;
+  for (var j = 0; j < items.length; j++) {
+    var it = items[j];
+    text += it.styleNo + ' ' + (it.colorName||'') + ' ' + (it.sizeName||'') + ' ×' + it.qty + '\n';
+    totalQty += (it.qty || 0);
   }
+  text += '\n共' + items.length + '款 ' + totalQty + '件';
 
-  // 生成文本
-  var text = '📦 近3天预计到货\n';
-  var keys = Object.keys(groups);
-  keys.sort();
-  for (var gi = 0; gi < keys.length; gi++) {
-    var g = groups[keys[gi]];
-    text += '\n' + formatDate(g.date) + ' · ' + g.supplier + '\n';
-    for (var j = 0; j < g.items.length; j++) {
-      var it = g.items[j];
-      text += '  ' + it.styleNo + ' ' + (it.colorName||'') + ' ' + (it.sizeName||'') + ' ×' + it.qty + '\n';
-    }
-  }
-  text += '\n共' + items.length + '款待到货';
+  // 复制到剪贴板（微信最可靠的方式）
+  copyText(text);
+}
 
-  // 优先用 Web Share API（手机端可分享到微信）
-  if (navigator.share) {
-    navigator.share({ title: '近3天预计到货', text: text }).catch(function() {});
-  } else {
-    // 降级：复制到剪贴板
+function copyText(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(text).then(function() {
-      showToast('已复制到剪贴板，可粘贴转发');
+      showToast('已复制，可粘贴到微信转发');
     }).catch(function() {
-      // 最终降级
-      var ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
-      showToast('已复制到剪贴板，可粘贴转发');
+      fallbackCopy(text);
     });
+  } else {
+    fallbackCopy(text);
   }
+}
+
+function fallbackCopy(text) {
+  var ta = document.createElement('textarea');
+  ta.value = text; ta.style.position = 'fixed'; ta.style.left = '-9999px';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); showToast('已复制，可粘贴到微信转发'); }
+  catch(e) { showToast('复制失败，请手动复制'); }
+  document.body.removeChild(ta);
 }
 
 async function refreshData() {
@@ -679,7 +682,6 @@ document.getElementById('btnCloseSettings').addEventListener('click', function()
 document.getElementById('modalOverlay').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
 document.getElementById('settingsOverlay').addEventListener('click', function(e) { if (e.target === this) document.getElementById('settingsOverlay').classList.remove('active'); });
 document.getElementById('btnRefresh').addEventListener('click', refreshData);
-document.getElementById('btnForward').addEventListener('click', forwardData);
 document.getElementById('btnSettings').addEventListener('click', function() {
   var config = getConfig();
   document.getElementById('repoUrl').value = config.repoUrl || '';
@@ -904,6 +906,14 @@ document.getElementById('itemForm').addEventListener('submit', async function(e)
 // 列表事件委托
 document.getElementById('itemList').addEventListener('click', function(e) {
   var target = e.target;
+
+  // 转发按钮
+  var fwdBtn = target.closest('.btn-forward');
+  if (fwdBtn) {
+    e.stopPropagation();
+    forwardGroup(fwdBtn.dataset.date, fwdBtn.dataset.supplier, fwdBtn.dataset.remark);
+    return;
+  }
 
   // +款按钮
   var addBtn = target.closest('.btn-add-sku');
