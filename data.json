@@ -24,5 +24,18 @@
     "status": "pending",
     "createdAt": "2026-06-06T00:00:00.000Z",
     "updatedAt": "2026-06-06T00:00:00.000Z"
+  },
+  {
+    "id": "mq3abk536efyg",
+    "styleNo": "H700",
+    "colorName": "红色",
+    "sizeName": "M",
+    "qty": 70,
+    "arriveDate": "2026-06-17",
+    "supplier": "HY",
+    "remark": "加单次数：-1",
+    "status": "pending",
+    "updatedAt": "2026-06-07T04:31:24.855Z",
+    "createdAt": "2026-06-07T04:31:24.855Z"
   }
 ]
