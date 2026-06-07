@@ -268,11 +268,26 @@ function getRawUrl() {
 function loadCache() { try { var c = localStorage.getItem('arrival_cache'); return c ? JSON.parse(c) : null; } catch(e) { return null; } }
 function saveCache(data) { try { localStorage.setItem('arrival_cache', JSON.stringify(data)); } catch(e) {} }
 
+// ===== 带超时的fetch =====
+function fetchWithTimeout(url, options, timeout) {
+  timeout = timeout || 8000;
+  var controller = new AbortController();
+  var timeoutId = setTimeout(function() { controller.abort(); }, timeout);
+  var opts = Object.assign({}, options || {}, { signal: controller.signal });
+  return fetch(url, opts).then(function(resp) {
+    clearTimeout(timeoutId);
+    return resp;
+  }).catch(function(err) {
+    clearTimeout(timeoutId);
+    throw err;
+  });
+}
+
 // ===== 数据加载 =====
 async function loadData() {
   var info = getRepoInfo();
   if (!info) {
-    try { var r = await fetch('data.json'); return r.ok ? await r.json() : []; } catch(e) { return []; }
+    try { var r = await fetchWithTimeout('data.json', {}, 5000); return r.ok ? await r.json() : []; } catch(e) { return []; }
   }
 
   // 先用缓存立即显示
@@ -282,14 +297,14 @@ async function loadData() {
     render();
   }
 
-  // 从GitHub拉最新
+  // 从GitHub拉最新（带超时8秒）
   try {
-    var rawResp = await fetch(getRawUrl() + '?t=' + Date.now());
+    var rawResp = await fetchWithTimeout(getRawUrl() + '?t=' + Date.now(), {}, 8000);
     if (rawResp.ok) {
       var data = await rawResp.json();
       saveCache(data);
       // 异步获取SHA
-      fetch(getApiUrl(), { headers: info.token ? { 'Authorization': 'token ' + info.token } : {} })
+      fetchWithTimeout(getApiUrl(), { headers: info.token ? { 'Authorization': 'token ' + info.token } : {} }, 8000)
         .then(function(r) { return r.ok ? r.json() : null; })
         .then(function(r) { if (r) dataSha = r.sha; })
         .catch(function() {});
@@ -297,9 +312,9 @@ async function loadData() {
     }
   } catch(e) { console.warn('raw读取失败', e); }
 
-  // 降级API
+  // 降级API（带超时8秒）
   try {
-    var resp = await fetch(getApiUrl(), { headers: info.token ? { 'Authorization': 'token ' + info.token } : {} });
+    var resp = await fetchWithTimeout(getApiUrl(), { headers: info.token ? { 'Authorization': 'token ' + info.token } : {} }, 8000);
     if (resp.ok) {
       var result = await resp.json();
       dataSha = result.sha;
@@ -329,7 +344,7 @@ async function saveDataToRemote(data) {
 
   // 后台异步保存，不阻塞UI
   try {
-    var shaResp = await fetch(getApiUrl(), { headers: { 'Authorization': 'token ' + info.token } });
+    var shaResp = await fetchWithTimeout(getApiUrl(), { headers: { 'Authorization': 'token ' + info.token } }, 10000);
     if (shaResp.ok) {
       var shaData = await shaResp.json();
       dataSha = shaData.sha;
@@ -341,11 +356,11 @@ async function saveDataToRemote(data) {
     var content = btoa(unescape(encodeURIComponent(jsonStr)));
     var body = { message: '更新到货期数据 ' + new Date().toLocaleString('zh-CN'), content: content, sha: dataSha, branch: info.branch };
 
-    var resp = await fetch(getApiUrl(), {
+    var resp = await fetchWithTimeout(getApiUrl(), {
       method: 'PUT',
       headers: { 'Authorization': 'token ' + info.token, 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
-    });
+    }, 15000);
 
     if (!resp.ok) {
       var errData = await resp.json().catch(function() { return {}; });
@@ -575,7 +590,12 @@ async function markArrived(id) {
 }
 
 async function refreshData() {
-  allData = await loadData();
+  try {
+    allData = await loadData();
+  } catch(e) {
+    console.error('刷新失败:', e);
+    allData = loadCache() || [];
+  }
   render();
 }
 
@@ -775,10 +795,28 @@ function parseCSVLine(line) {
 }
 
 // ===== 初始化 =====
+var _initDone = false;
+function ensureRendered() {
+  if (_initDone) return;
+  _initDone = true;
+  if (!allData || allData.length === 0) allData = loadCache() || [];
+  render();
+}
+
 (async function init() {
   var config = getConfig();
   canEdit = !!(config.token);
-  allData = await loadData();
+
+  // 安全超时：5秒后强制渲染（防止网络挂起导致一直加载中）
+  setTimeout(ensureRendered, 5000);
+
+  try {
+    allData = await loadData();
+  } catch(e) {
+    console.error('加载失败:', e);
+    allData = loadCache() || [];
+  }
+  _initDone = true;
   render();
   if (!config.repoUrl) showToast('请先点击「设置」配置GitHub仓库');
 })();
