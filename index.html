@@ -131,7 +131,7 @@
   <div class="filter-tab active" data-filter="all">全部</div>
   <div class="filter-tab" data-filter="overdue">已逾期</div>
   <div class="filter-tab" data-filter="today">今日</div>
-  <div class="filter-tab" data-filter="week">本周</div>
+  <div class="filter-tab" data-filter="week">近3天</div>
   <div class="filter-tab" data-filter="arrived">已到货</div>
 </div>
 
@@ -144,7 +144,7 @@
 
 <div class="list" id="itemList"><div class="empty"><div class="icon">📦</div><p>加载中...</p></div></div>
 
-<button class="fab" id="fabBtn">+</button>
+<button class="fab" id="fabBtn" style="display:none">+</button>
 
 <!-- 添加/编辑弹窗 -->
 <div class="modal-overlay" id="modalOverlay">
@@ -219,6 +219,7 @@ let currentFilter = 'all';
 let searchQuery = '';
 let dataSha = null;
 let isSaving = false;
+let canEdit = false; // 是否有编辑权限
 
 // ===== 配置 =====
 function getConfig() { try { return JSON.parse(localStorage.getItem('arrival_config') || '{}'); } catch { return {}; } }
@@ -324,7 +325,13 @@ function getColorForStyle(s) { let h = 0; for (let i = 0; i < s.length; i++) h =
 // ===== 渲染 =====
 function render() {
   const today = new Date().toISOString().split('T')[0];
-  const weekEnd = new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0];
+  const weekEnd = new Date(Date.now() + 3 * 86400000).toISOString().split('T')[0];
+
+  // 根据权限显示/隐藏元素
+  document.getElementById('fabBtn').style.display = canEdit ? 'flex' : 'none';
+  document.querySelectorAll('.toolbar button:not(.view-only)').forEach(b => b.style.display = canEdit ? '' : 'none');
+  // 导出按钮所有人可见
+  document.querySelector('.toolbar button[onclick="exportCSV()"]').style.display = '';
   const total = allData.length;
   const pending = allData.filter(d => d.status === 'pending').length;
   const overdue = allData.filter(d => d.status === 'pending' && d.arriveDate < today).length;
@@ -387,7 +394,7 @@ function render() {
           <span class="date-text">${dateDisplay}${dayLabel}</span>
           <span class="date-meta">${group.supplier ? group.supplier + ' · ' : ''}${group.items.length}款 ${totalQty}件${group.remark ? ' · ' + esc(group.remark) : ''}</span>
         </div>
-        <button class="btn-add-sku" onclick="addSkuToDate('${esc(group.date)}','${esc(group.supplier||'')}','${esc(group.remark||'')}')">+款</button>
+        <button class="btn-add-sku" onclick="addSkuToDate('${esc(group.date)}','${esc(group.supplier||'')}','${esc(group.remark||'')}')" style="${canEdit?'':'display:none'}">+款</button>
       </div>`;
 
     group.items.forEach(item => {
@@ -403,9 +410,8 @@ function render() {
         </div>
         <div class="qty">${item.qty}<small>件</small></div>
         <div class="actions">
-          ${item.status === 'pending' ? `<button class="btn-arrived" onclick="markArrived('${item.id}')">到货</button>` : ''}
-          <button class="btn-sm" onclick="editItem('${item.id}')">✏️</button>
-          <button class="btn-sm del" onclick="deleteItem('${item.id}')">🗑</button>
+          ${canEdit && item.status === 'pending' ? `<button class="btn-arrived" onclick="markArrived('${item.id}')">到货</button>` : ''}
+          ${canEdit ? `<button class="btn-sm" onclick="editItem('${item.id}')">✏️</button><button class="btn-sm del" onclick="deleteItem('${item.id}')">🗑</button>` : ''}
         </div>
       </div>`;
     });
@@ -480,6 +486,7 @@ function openSettings() {
 function closeSettings() { document.getElementById('settingsOverlay').classList.remove('active'); }
 function saveSettings() {
   saveConfig({ repoUrl: document.getElementById('repoUrl').value.trim(), token: document.getElementById('githubToken').value.trim(), branch: document.getElementById('branch').value.trim() || 'main' });
+  canEdit = !!(getConfig().token);
   closeSettings();
   showToast('设置已保存，正在重新加载...');
   refreshData();
@@ -660,6 +667,7 @@ document.getElementById('settingsOverlay').addEventListener('click', function(e)
 // ===== 初始化 =====
 (async function init() {
   const config = getConfig();
+  canEdit = !!(config.token);
   allData = await loadData();
   render();
   if (!config.repoUrl && allData.length <= 2) showToast('请先点击「设置」配置GitHub仓库地址和Token');
