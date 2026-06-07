@@ -255,28 +255,44 @@ function decodeBase64UTF8(base64) {
 }
 
 // ===== 数据读写 =====
+function loadCache() {
+  try { const c = localStorage.getItem('arrival_cache'); return c ? JSON.parse(c) : null; } catch { return null; }
+}
+function saveCache(data) {
+  try { localStorage.setItem('arrival_cache', JSON.stringify(data)); } catch {}
+}
+
 async function loadData() {
   try {
     const info = getRepoInfo();
     if (info) {
-      // 优先用raw URL读取（避免base64编码问题）
+      // 先用缓存立即显示
+      const cached = loadCache();
+      if (cached) { allData = cached; render(); }
+
+      // 后台从GitHub拉最新数据
       try {
         const rawResp = await fetch(getRawUrl() + '?t=' + Date.now());
         if (rawResp.ok) {
           const data = await rawResp.json();
-          // 同时获取SHA用于后续写入
-          const apiResp = await fetch(getApiUrl(), { headers: info.token ? { 'Authorization': `token ${info.token}` } : {} });
-          if (apiResp.ok) { const r = await apiResp.json(); dataSha = r.sha; }
+          saveCache(data);
+          // 获取SHA（懒加载，保存时才需要）
+          fetch(getApiUrl(), { headers: info.token ? { 'Authorization': `token ${info.token}` } : {} })
+            .then(r => r.ok ? r.json() : null)
+            .then(r => { if (r) dataSha = r.sha; })
+            .catch(() => {});
           return data;
         }
-      } catch (e) { console.warn('raw读取失败，尝试API'); }
+      } catch (e) { console.warn('raw读取失败'); }
 
       // 降级用API读取
       const resp = await fetch(getApiUrl(), { headers: info.token ? { 'Authorization': `token ${info.token}` } : {} });
       if (!resp.ok) throw new Error('读取失败: ' + resp.status);
       const result = await resp.json();
       dataSha = result.sha;
-      return JSON.parse(decodeBase64UTF8(result.content));
+      const data = JSON.parse(decodeBase64UTF8(result.content));
+      saveCache(data);
+      return data;
     } else {
       const resp = await fetch('data.json');
       if (!resp.ok) return [];
@@ -284,6 +300,8 @@ async function loadData() {
     }
   } catch (err) {
     console.error('加载数据失败:', err);
+    const cached = loadCache();
+    if (cached) return cached;
     showToast('加载数据失败: ' + err.message);
     return [];
   }
@@ -291,9 +309,15 @@ async function loadData() {
 
 async function saveDataToRemote(data) {
   const info = getRepoInfo();
-  if (!info || !info.token) { showToast('未配置GitHub Token，数据仅保存在本地'); localStorage.setItem('arrival_data_local', JSON.stringify(data)); return true; }
+  saveCache(data); // 先存缓存
+  if (!info || !info.token) { showToast('未配置GitHub Token，数据仅保存在本地'); return true; }
   setSyncStatus('saving');
   try {
+    // 如果还没有SHA，先获取
+    if (!dataSha) {
+      const shaResp = await fetch(getApiUrl(), { headers: { 'Authorization': `token ${info.token}` } });
+      if (shaResp.ok) { const r = await shaResp.json(); dataSha = r.sha; }
+    }
     const jsonStr = JSON.stringify(data, null, 2);
     const content = btoa(unescape(encodeURIComponent(jsonStr)));
     const body = { message: `更新到货期数据 ${new Date().toLocaleString('zh-CN')}`, content: content, sha: dataSha, branch: info.branch };
