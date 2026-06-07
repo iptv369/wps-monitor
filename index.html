@@ -424,6 +424,11 @@ function render() {
 }
 
 function _doRender() {
+  // 安全检查：allData 为空时尝试从缓存恢复
+  if (!allData || !Array.isArray(allData)) {
+    allData = loadCache() || [];
+  }
+
   var today = new Date().toISOString().split('T')[0];
   var weekEnd = new Date(Date.now() + 3 * 86400000).toISOString().split('T')[0];
 
@@ -499,16 +504,16 @@ function _doRender() {
 
     var collapsedClass = searchQuery ? '' : ' collapsed';
     html += '<div class="date-group" data-group-key="' + escAttr(keys[gi]) + '">';
-    html += '<div class="date-header' + collapsedClass + '" data-action="toggle"><div class="date-info">';
+    html += '<div class="date-header' + collapsedClass + '"><div class="date-info">';
     html += '<span class="toggle-icon">▼</span>';
     html += '<span class="dot ' + dotClass + '"></span>';
     html += '<span class="date-text">' + escHtml(dateDisplay) + dayLabel + '</span>';
     html += '<span class="date-meta">' + (group.supplier ? escHtml(group.supplier) + ' · ' : '') + group.items.length + '款 ' + totalQty + '件' + (group.remark ? ' · ' + escHtml(group.remark) : '') + '</span>';
     html += '</div>';
     html += '<div class="date-header-btns">';
-    html += '<button class="btn-forward" data-action="forward" data-date="' + escAttr(group.date) + '" data-supplier="' + escAttr(group.supplier||'') + '" data-remark="' + escAttr(group.remark||'') + '">转发</button>';
+    html += '<button type="button" class="btn-forward" data-date="' + escAttr(group.date) + '" data-supplier="' + escAttr(group.supplier||'') + '" data-remark="' + escAttr(group.remark||'') + '">转发</button>';
     if (canEdit) {
-      html += '<button class="btn-add-sku" data-date="' + escAttr(group.date) + '" data-supplier="' + escAttr(group.supplier||'') + '" data-remark="' + escAttr(group.remark||'') + '">+款</button>';
+      html += '<button type="button" class="btn-add-sku" data-date="' + escAttr(group.date) + '" data-supplier="' + escAttr(group.supplier||'') + '" data-remark="' + escAttr(group.remark||'') + '">+款</button>';
     }
     html += '</div>';
     html += '</div>';
@@ -529,9 +534,9 @@ function _doRender() {
       html += '<div class="qty">' + item.qty + '<small>件</small></div>';
       if (canEdit) {
         html += '<div class="actions">';
-        if (item.status === 'pending') html += '<button class="btn-arrived" data-action="arrive">到货</button>';
-        html += '<button class="btn-sm" data-action="edit">✏</button>';
-        html += '<button class="btn-sm" data-action="delete" style="color:var(--danger)">✕</button>';
+        if (item.status === 'pending') html += '<button type="button" class="btn-arrived" data-action="arrive">到货</button>';
+        html += '<button type="button" class="btn-sm" data-action="edit">✏</button>';
+        html += '<button type="button" class="btn-sm" data-action="delete" style="color:var(--danger)">✕</button>';
         html += '</div>';
       }
       html += '</div>';
@@ -907,9 +912,10 @@ document.getElementById('itemForm').addEventListener('submit', async function(e)
 document.getElementById('itemList').addEventListener('click', function(e) {
   var target = e.target;
 
-  // 转发按钮
+  // 转发按钮（优先级最高）
   var fwdBtn = target.closest('.btn-forward');
   if (fwdBtn) {
+    e.preventDefault();
     e.stopPropagation();
     forwardGroup(fwdBtn.dataset.date, fwdBtn.dataset.supplier, fwdBtn.dataset.remark);
     return;
@@ -918,34 +924,35 @@ document.getElementById('itemList').addEventListener('click', function(e) {
   // +款按钮
   var addBtn = target.closest('.btn-add-sku');
   if (addBtn) {
+    e.preventDefault();
     e.stopPropagation();
     openModal(null, addBtn.dataset.date, addBtn.dataset.supplier, addBtn.dataset.remark);
     return;
   }
 
-  // 折叠/展开
+  // 操作按钮（到货/编辑/删除）- 必须在 sku-row 内
+  var actionBtn = target.closest('.sku-row [data-action]');
+  if (actionBtn) {
+    e.preventDefault();
+    var row = actionBtn.closest('.sku-row');
+    if (!row) return;
+    var id = row.dataset.id;
+    var action = actionBtn.dataset.action;
+    if (action === 'arrive') markArrived(id);
+    else if (action === 'edit') editItem(id);
+    else if (action === 'delete') deleteItem(id);
+    return;
+  }
+
+  // 折叠/展开（点击 date-header 但不是按钮时）
   var header = target.closest('.date-header');
-  if (header && header.dataset.action === 'toggle') {
+  if (header) {
     var group = header.closest('.date-group');
     var items = group.querySelector('.date-items');
     header.classList.toggle('collapsed');
     items.classList.toggle('collapsed');
     return;
   }
-
-  // 操作按钮
-  var actionBtn = target.closest('[data-action]');
-  if (!actionBtn || actionBtn.dataset.action === 'toggle') return;
-
-  var row = actionBtn.closest('.sku-row');
-  if (!row) return;
-
-  var id = row.dataset.id;
-  var action = actionBtn.dataset.action;
-
-  if (action === 'arrive') markArrived(id);
-  else if (action === 'edit') editItem(id);
-  else if (action === 'delete') deleteItem(id);
 });
 
 // 筛选
