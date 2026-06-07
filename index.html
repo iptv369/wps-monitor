@@ -57,10 +57,14 @@
   .empty p { font-size: 14px; }
   .fab { position: fixed; bottom: 24px; right: 24px; width: 52px; height: 52px; border-radius: 14px; background: var(--primary); color: white; border: none; font-size: 26px; display: none; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(79,70,229,0.4); cursor: pointer; z-index: 9999; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); -webkit-appearance: none; touch-action: manipulation; }
   .fab:active { transform: scale(0.9); }
-  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 10000; display: none; align-items: flex-end; justify-content: center; overflow-y: auto; }
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 10000; display: none; align-items: center; justify-content: center; overflow-y: auto; }
   .modal-overlay.active { display: flex; }
-  .modal { background: var(--card); border-radius: 20px 20px 0 0; width: 100%; max-width: 500px; padding: 24px 20px; padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px)); animation: slideUp 0.3s ease; max-height: 90vh; overflow-y: auto; }
-  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .modal { background: var(--card); border-radius: 20px; width: 100%; max-width: 500px; padding: 24px 20px; animation: slideUp 0.2s ease; max-height: 90vh; overflow-y: auto; }
+  @keyframes slideUp { from { transform: translateY(30px); opacity:0; } to { transform: translateY(0); opacity:1; } }
+  @media (max-width: 600px) {
+    .modal-overlay { align-items: flex-end; }
+    .modal { border-radius: 20px 20px 0 0; padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px)); }
+  }
   .modal h2 { font-size: 18px; font-weight: 700; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
   .modal h2 .close-btn { width: 30px; height: 30px; border: none; border-radius: 8px; background: #f1f5f9; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); }
   .form-group { margin-bottom: 14px; }
@@ -80,6 +84,33 @@
   .sync-badge { font-size: 11px; background: rgba(255,255,255,0.15); padding: 3px 8px; border-radius: 10px; display: inline-flex; align-items: center; gap: 4px; }
   .sync-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: #4ade80; }
   .sync-badge .dot.saving { background: var(--warning); }
+  /* 桌面端优化 */
+  @media (min-width: 768px) {
+    .header h1 { font-size: 22px; }
+    .header-btn { padding: 8px 16px; font-size: 14px; }
+    .search-bar input { font-size: 16px; padding: 12px 20px; }
+    .stat-card .num { font-size: 24px; }
+    .stat-card .label { font-size: 12px; }
+    .filter-tab { padding: 7px 16px; font-size: 14px; }
+    .toolbar button { padding: 8px 14px; font-size: 13px; }
+    .sku-row { padding: 12px 18px; gap: 12px; }
+    .sku-row .title { font-size: 15px; }
+    .sku-row .qty { font-size: 18px; }
+    .sku-row .btn-sm { width: 30px; height: 30px; font-size: 14px; }
+    .sku-row .btn-arrived { padding: 4px 12px; font-size: 12px; }
+    .sku-row .btn-sm:hover { background: #f1f5f9; }
+    .sku-row .btn-arrived:hover { opacity: 0.9; }
+    .date-header .btn-add-sku:hover { opacity: 0.9; }
+    .fab { width: 56px; height: 56px; font-size: 28px; }
+    .fab:hover { box-shadow: 0 6px 20px rgba(79,70,229,0.5); }
+    .header-btn:hover { background: rgba(255,255,255,0.25); }
+    .toolbar button:hover { background: #f1f5f9; }
+    .btn-submit:hover { background: var(--primary-light); }
+    .list { max-width: 800px; margin: 0 auto; }
+    .stats { max-width: 800px; margin: 0 auto; }
+    .filter-tabs { max-width: 800px; margin: 0 auto; }
+    .toolbar { max-width: 800px; margin: 0 auto; }
+  }
 </style>
 </head>
 <body>
@@ -284,7 +315,7 @@ async function loadData() {
   return cached || [];
 }
 
-// ===== 数据保存 =====
+// ===== 数据保存（乐观更新） =====
 async function saveDataToRemote(data) {
   var info = getRepoInfo();
   saveCache(data);
@@ -296,8 +327,8 @@ async function saveDataToRemote(data) {
 
   setSyncStatus('saving');
 
+  // 后台异步保存，不阻塞UI
   try {
-    // 获取最新SHA
     var shaResp = await fetch(getApiUrl(), { headers: { 'Authorization': 'token ' + info.token } });
     if (shaResp.ok) {
       var shaData = await shaResp.json();
@@ -327,10 +358,18 @@ async function saveDataToRemote(data) {
     return true;
   } catch(err) {
     console.error('保存失败:', err);
-    showToast('保存失败: ' + err.message);
+    showToast('同步失败: ' + err.message);
     setSyncStatus('error');
     return false;
   }
+}
+
+// 乐观保存：先更新UI，后台同步
+function optimisticSave(data) {
+  allData = data;
+  saveCache(data);
+  render();
+  return saveDataToRemote(data);
 }
 
 function setSyncStatus(status) {
@@ -520,10 +559,8 @@ async function deleteItem(id) {
   isSaving = true;
   var newData = [];
   for (var i = 0; i < allData.length; i++) { if (allData[i].id !== id) newData.push(allData[i]); }
-  allData = newData;
-  var ok = await saveDataToRemote(allData);
-  if (ok) showToast('删除成功');
-  render();
+  await optimisticSave(newData);
+  showToast('删除成功');
   isSaving = false;
 }
 
@@ -533,8 +570,7 @@ async function markArrived(id) {
   for (var i = 0; i < allData.length; i++) {
     if (allData[i].id === id) { allData[i].status = 'arrived'; allData[i].updatedAt = new Date().toISOString(); break; }
   }
-  await saveDataToRemote(allData);
-  render();
+  await optimisticSave(allData);
   isSaving = false;
 }
 
@@ -595,8 +631,7 @@ document.getElementById('importInput').addEventListener('change', function(event
         item.updatedAt = new Date().toISOString();
         allData.push(item); added++;
       }
-      await saveDataToRemote(allData);
-      render();
+      await optimisticSave(allData);
       showToast('导入成功！新增 ' + added + ' 条');
     } catch(err) { showToast('导入失败：' + err.message); }
   };
@@ -658,8 +693,9 @@ document.getElementById('itemForm').addEventListener('submit', async function(e)
     }
   }
 
-  var ok = await saveDataToRemote(allData);
-  if (ok) { closeModal(); render(); showToast(editId ? '保存成功' : '添加成功'); }
+  var ok = await optimisticSave(allData);
+  closeModal();
+  showToast(editId ? '保存成功' : '添加成功');
   isSaving = false;
 });
 
