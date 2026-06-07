@@ -313,25 +313,40 @@ async function saveDataToRemote(data) {
   if (!info || !info.token) { showToast('未配置GitHub Token，数据仅保存在本地'); return true; }
   setSyncStatus('saving');
   try {
-    // 如果还没有SHA，先获取
+    // 确保获取到SHA
     if (!dataSha) {
       const shaResp = await fetch(getApiUrl(), { headers: { 'Authorization': `token ${info.token}` } });
       if (shaResp.ok) { const r = await shaResp.json(); dataSha = r.sha; }
+      else { throw new Error('获取文件SHA失败'); }
     }
     const jsonStr = JSON.stringify(data, null, 2);
     const content = btoa(unescape(encodeURIComponent(jsonStr)));
     const body = { message: `更新到货期数据 ${new Date().toLocaleString('zh-CN')}`, content: content, sha: dataSha, branch: info.branch };
     const resp = await fetch(getApiUrl(), { method: 'PUT', headers: { 'Authorization': `token ${info.token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-    if (!resp.ok) { const err = await resp.json(); throw new Error(err.message || '保存失败'); }
-    const result = await resp.json();
-    dataSha = result.content.sha;
+    if (!resp.ok) {
+      const errData = await resp.json().catch(() => ({}));
+      // SHA冲突，重新获取再试一次
+      if (resp.status === 409 || (errData.message && errData.message.includes('SHA'))) {
+        const shaResp2 = await fetch(getApiUrl(), { headers: { 'Authorization': `token ${info.token}` } });
+        if (shaResp2.ok) { const r = await shaResp2.json(); dataSha = r.sha; }
+        body.sha = dataSha;
+        const resp2 = await fetch(getApiUrl(), { method: 'PUT', headers: { 'Authorization': `token ${info.token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        if (!resp2.ok) throw new Error('保存失败(重试)');
+        const result2 = await resp2.json();
+        dataSha = result2.content.sha;
+      } else {
+        throw new Error(errData.message || '保存失败');
+      }
+    } else {
+      const result = await resp.json();
+      dataSha = result.content.sha;
+    }
     setSyncStatus('synced');
     return true;
   } catch (err) {
     console.error('保存失败:', err);
     showToast('保存失败: ' + err.message);
     setSyncStatus('error');
-    localStorage.setItem('arrival_data_local', JSON.stringify(data));
     return false;
   }
 }
@@ -427,7 +442,7 @@ function render() {
       const initial = (item.styleNo || '?').charAt(0).toUpperCase();
       const statusClass = item.status === 'arrived' ? 'arrived' : isOverdue ? 'overdue' : 'pending';
       const statusText = item.status === 'arrived' ? '已到货' : isOverdue ? '逾期' : '待到货';
-      html += `<div class="sku-row">
+      html += `<div class="sku-row" data-id="${escAttr(item.id)}">
         <div class="color-dot" style="background:${color}">${initial}</div>
         <div class="info">
           <div class="title">${esc(item.styleNo||'')} ${esc(item.colorName||'')} ${item.sizeName ? esc(item.sizeName) : ''}</div>
@@ -435,8 +450,8 @@ function render() {
         </div>
         <div class="qty">${item.qty}<small>件</small></div>
         <div class="actions">
-          ${canEdit && item.status === 'pending' ? `<button class="btn-arrived" onclick="markArrived('${item.id}')">到货</button>` : ''}
-          ${canEdit ? `<button class="btn-sm" onclick="editItem('${item.id}')">✏️</button><button class="btn-sm del" onclick="deleteItem('${item.id}')">🗑</button>` : ''}
+          ${canEdit && item.status === 'pending' ? '<button class="btn-arrived" data-action="arrive">到货</button>' : ''}
+          ${canEdit ? '<button class="btn-sm" data-action="edit">✏</button><button class="btn-sm del" data-action="delete">✕</button>' : ''}
         </div>
       </div>`;
     });
@@ -689,10 +704,21 @@ function parseCSVLine(line) {
 document.getElementById('fabBtn').addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); openModal(); });
 document.getElementById('modalOverlay').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
 document.getElementById('settingsOverlay').addEventListener('click', function(e) { if (e.target === this) closeSettings(); });
-// 事件委托：+款按钮
+// 事件委托：列表内所有按钮
 document.getElementById('itemList').addEventListener('click', function(e) {
-  const btn = e.target.closest('.btn-add-sku');
-  if (btn) { addSkuToDate(btn.dataset.date, btn.dataset.supplier, btn.dataset.remark); }
+  const btn = e.target.closest('[data-action]');
+  if (!btn) {
+    const addBtn = e.target.closest('.btn-add-sku');
+    if (addBtn) addSkuToDate(addBtn.dataset.date, addBtn.dataset.supplier, addBtn.dataset.remark);
+    return;
+  }
+  const row = btn.closest('.sku-row');
+  if (!row) return;
+  const id = row.dataset.id;
+  const action = btn.dataset.action;
+  if (action === 'arrive') markArrived(id);
+  else if (action === 'edit') editItem(id);
+  else if (action === 'delete') deleteItem(id);
 });
 
 // ===== 网络状态 =====
