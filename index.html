@@ -151,6 +151,7 @@
 </div>
 
 <div class="toolbar" id="toolbar">
+  <button id="btnForward">转发近3天</button>
   <button id="btnTemplate">下载模板</button>
   <button id="btnExport">导出Excel</button>
   <button id="btnImport">导入数据</button>
@@ -615,6 +616,52 @@ async function markArrived(id) {
   isSaving = false;
 }
 
+// ===== 转发近3天数据 =====
+function forwardData() {
+  var today = new Date().toISOString().split('T')[0];
+  var weekEnd = new Date(Date.now() + 3 * 86400000).toISOString().split('T')[0];
+  var items = allData.filter(function(d) { return d.arriveDate >= today && d.arriveDate <= weekEnd && d.status === 'pending'; });
+
+  if (items.length === 0) { showToast('近3天没有待到货记录'); return; }
+
+  // 按供应商+日期分组
+  var groups = {};
+  for (var i = 0; i < items.length; i++) {
+    var item = items[i];
+    var key = (item.supplier || '未指定') + '|' + item.arriveDate;
+    if (!groups[key]) groups[key] = { supplier: item.supplier || '未指定', date: item.arriveDate, items: [] };
+    groups[key].items.push(item);
+  }
+
+  // 生成文本
+  var text = '📦 近3天预计到货\n';
+  var keys = Object.keys(groups);
+  keys.sort();
+  for (var gi = 0; gi < keys.length; gi++) {
+    var g = groups[keys[gi]];
+    text += '\n' + formatDate(g.date) + ' · ' + g.supplier + '\n';
+    for (var j = 0; j < g.items.length; j++) {
+      var it = g.items[j];
+      text += '  ' + it.styleNo + ' ' + (it.colorName||'') + ' ' + (it.sizeName||'') + ' ×' + it.qty + '\n';
+    }
+  }
+  text += '\n共' + items.length + '款待到货';
+
+  // 优先用 Web Share API（手机端可分享到微信）
+  if (navigator.share) {
+    navigator.share({ title: '近3天预计到货', text: text }).catch(function() {});
+  } else {
+    // 降级：复制到剪贴板
+    navigator.clipboard.writeText(text).then(function() {
+      showToast('已复制到剪贴板，可粘贴转发');
+    }).catch(function() {
+      // 最终降级
+      var ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+      showToast('已复制到剪贴板，可粘贴转发');
+    });
+  }
+}
+
 async function refreshData() {
   try {
     allData = await loadData();
@@ -632,6 +679,7 @@ document.getElementById('btnCloseSettings').addEventListener('click', function()
 document.getElementById('modalOverlay').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
 document.getElementById('settingsOverlay').addEventListener('click', function(e) { if (e.target === this) document.getElementById('settingsOverlay').classList.remove('active'); });
 document.getElementById('btnRefresh').addEventListener('click', refreshData);
+document.getElementById('btnForward').addEventListener('click', forwardData);
 document.getElementById('btnSettings').addEventListener('click', function() {
   var config = getConfig();
   document.getElementById('repoUrl').value = config.repoUrl || '';
