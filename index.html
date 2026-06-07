@@ -6,38 +6,27 @@
 <title>到货期管理</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%234f46e5'/><text x='50' y='68' font-size='50' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'>到</text></svg>">
 <style>
-  :root {
-    --primary: #4f46e5; --primary-light: #818cf8;
-    --bg: #f8fafc; --card: #ffffff; --text: #1e293b;
-    --text-secondary: #64748b; --border: #e2e8f0;
-    --danger: #ef4444; --success: #22c55e; --warning: #f59e0b; --radius: 12px;
-  }
+  :root { --primary: #4f46e5; --primary-light: #818cf8; --bg: #f8fafc; --card: #ffffff; --text: #1e293b; --text-secondary: #64748b; --border: #e2e8f0; --danger: #ef4444; --success: #22c55e; --warning: #f59e0b; --radius: 12px; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; -webkit-tap-highlight-color: transparent; }
-
   .header { position: sticky; top: 0; z-index: 100; background: var(--primary); color: white; padding: 12px 20px; padding-top: env(safe-area-inset-top, 12px); display: flex; justify-content: space-between; align-items: center; }
   .header h1 { font-size: 18px; font-weight: 700; }
   .header .subtitle { font-size: 11px; opacity: 0.7; }
   .header-btn { background: rgba(255,255,255,0.15); border: none; color: white; padding: 6px 10px; border-radius: 8px; font-size: 12px; cursor: pointer; }
   .header-btn:active { background: rgba(255,255,255,0.25); }
-
   .search-bar { position: sticky; top: 52px; z-index: 99; background: var(--primary); padding: 0 20px 12px; }
   .search-bar input { width: 100%; padding: 10px 16px; border: none; border-radius: 10px; font-size: 15px; background: rgba(255,255,255,0.2); color: white; outline: none; }
   .search-bar input::placeholder { color: rgba(255,255,255,0.6); }
-
   .stats { display: flex; gap: 10px; padding: 12px 20px; overflow-x: auto; }
   .stat-card { flex: 0 0 auto; background: var(--card); border-radius: var(--radius); padding: 10px 14px; min-width: 80px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
   .stat-card .num { font-size: 20px; font-weight: 700; color: var(--primary); }
   .stat-card .label { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
-
   .filter-tabs { display: flex; gap: 8px; padding: 0 20px 10px; overflow-x: auto; }
   .filter-tab { padding: 5px 12px; border-radius: 20px; font-size: 13px; border: 1px solid var(--border); background: var(--card); color: var(--text-secondary); cursor: pointer; white-space: nowrap; }
   .filter-tab.active { background: var(--primary); color: white; border-color: var(--primary); }
-
   .toolbar { display: flex; gap: 8px; padding: 0 20px 10px; flex-wrap: wrap; }
   .toolbar button { padding: 5px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--card); font-size: 12px; color: var(--text-secondary); cursor: pointer; }
   .toolbar button:active { background: #f1f5f9; }
-
   .list { padding: 0 20px 100px; }
   .date-group { margin-bottom: 16px; }
   .date-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding: 8px 12px; background: #eef2ff; border-radius: 10px; }
@@ -48,34 +37,26 @@
   .date-header .date-text { font-size: 14px; font-weight: 700; color: var(--primary); }
   .date-header .date-meta { font-size: 11px; color: var(--text-secondary); }
   .date-header .btn-add-sku { background: var(--primary); color: white; border: none; border-radius: 8px; padding: 4px 10px; font-size: 12px; cursor: pointer; }
-
   .sku-row { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: var(--card); border-radius: var(--radius); margin-bottom: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
-  .sku-row:active { transform: scale(0.98); }
   .sku-row .color-dot { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: white; flex-shrink: 0; }
   .sku-row .info { flex: 1; min-width: 0; }
   .sku-row .title { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .sku-row .meta { font-size: 12px; color: var(--text-secondary); margin-top: 2px; display: flex; gap: 6px; flex-wrap: wrap; }
-  .sku-row .meta span { white-space: nowrap; }
   .sku-row .qty { font-size: 16px; font-weight: 700; color: var(--primary); flex-shrink: 0; }
   .sku-row .qty small { font-size: 11px; font-weight: 400; color: var(--text-secondary); }
   .sku-row .actions { display: flex; gap: 2px; flex-shrink: 0; }
   .sku-row .btn-sm { width: 26px; height: 26px; border: none; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 12px; background: transparent; color: var(--text-secondary); }
   .sku-row .btn-sm:active { background: #f1f5f9; }
-  .sku-row .btn-sm.del:active { background: #fef2f2; color: var(--danger); }
   .sku-row .btn-arrived { background: var(--success); color: white; border: none; border-radius: 6px; padding: 2px 8px; font-size: 11px; cursor: pointer; }
-
   .status-tag { font-size: 11px; padding: 2px 6px; border-radius: 6px; font-weight: 600; }
   .status-tag.pending { background: #fef3c7; color: #92400e; }
   .status-tag.arrived { background: #dcfce7; color: #166534; }
   .status-tag.overdue { background: #fee2e2; color: #991b1b; }
-
   .empty { text-align: center; padding: 50px 20px; color: var(--text-secondary); }
   .empty .icon { font-size: 42px; margin-bottom: 10px; }
   .empty p { font-size: 14px; }
-
-  .fab { position: fixed; bottom: 24px; right: 24px; width: 52px; height: 52px; border-radius: 14px; background: var(--primary); color: white; border: none; font-size: 26px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(79,70,229,0.4); cursor: pointer; z-index: 9999; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); -webkit-appearance: none; touch-action: manipulation; }
+  .fab { position: fixed; bottom: 24px; right: 24px; width: 52px; height: 52px; border-radius: 14px; background: var(--primary); color: white; border: none; font-size: 26px; display: none; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(79,70,229,0.4); cursor: pointer; z-index: 9999; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); -webkit-appearance: none; touch-action: manipulation; }
   .fab:active { transform: scale(0.9); }
-
   .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 10000; display: none; align-items: flex-end; justify-content: center; overflow-y: auto; }
   .modal-overlay.active { display: flex; }
   .modal { background: var(--card); border-radius: 20px 20px 0 0; width: 100%; max-width: 500px; padding: 24px 20px; padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px)); animation: slideUp 0.3s ease; max-height: 90vh; overflow-y: auto; }
@@ -86,18 +67,13 @@
   .form-group label { display: block; font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 5px; }
   .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 15px; outline: none; background: var(--card); color: var(--text); }
   .form-group input:focus, .form-group textarea:focus { border-color: var(--primary); }
-  .form-group textarea { resize: vertical; min-height: 50px; }
-  .form-row { display: flex; gap: 10px; }
-  .form-row .form-group { flex: 1; }
   .btn-submit { width: 100%; padding: 14px; border: none; border-radius: 12px; background: var(--primary); color: white; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 8px; }
   .btn-submit:active { background: var(--primary-light); }
-
   .sku-input-row { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; padding: 8px; background: #f8fafc; border-radius: 8px; }
   .sku-input-row input { flex: 1; padding: 8px 10px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; outline: none; min-width: 0; }
   .sku-input-row input:focus { border-color: var(--primary); }
   .sku-input-row .btn-remove { width: 28px; height: 28px; border: none; border-radius: 6px; background: #fee2e2; color: var(--danger); cursor: pointer; font-size: 14px; flex-shrink: 0; }
   .btn-add-row { width: 100%; padding: 8px; border: 1.5px dashed var(--border); border-radius: 8px; background: transparent; color: var(--primary); font-size: 13px; cursor: pointer; margin-bottom: 14px; }
-
   #importInput { display: none; }
   .toast { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 10px 20px; border-radius: 10px; font-size: 14px; z-index: 99999; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
   .toast.show { opacity: 1; }
@@ -117,8 +93,8 @@
     </div>
   </div>
   <div style="display:flex;gap:8px;align-items:center">
-    <button class="header-btn" onclick="refreshData()">刷新</button>
-    <button class="header-btn" onclick="openSettings()">设置</button>
+    <button class="header-btn" id="btnRefresh">刷新</button>
+    <button class="header-btn" id="btnSettings">设置</button>
   </div>
 </div>
 
@@ -136,25 +112,25 @@
   <div class="filter-tab" data-filter="arrived">已到货</div>
 </div>
 
-<div class="toolbar">
-  <button onclick="downloadTemplate()">下载模板</button>
-  <button onclick="exportCSV()">导出Excel</button>
-  <button onclick="document.getElementById('importInput').click()">导入数据</button>
-  <input type="file" id="importInput" accept=".csv,.json" onchange="importData(event)">
+<div class="toolbar" id="toolbar">
+  <button id="btnTemplate">下载模板</button>
+  <button id="btnExport">导出Excel</button>
+  <button id="btnImport">导入数据</button>
+  <input type="file" id="importInput" accept=".csv,.json">
 </div>
 
 <div class="list" id="itemList"><div class="empty"><div class="icon">📦</div><p>加载中...</p></div></div>
 
-<button class="fab" id="fabBtn" style="display:none">+</button>
+<button class="fab" id="fabBtn">+</button>
 
 <!-- 添加/编辑弹窗 -->
 <div class="modal-overlay" id="modalOverlay">
-  <div class="modal" onclick="event.stopPropagation()">
+  <div class="modal" id="modalContent">
     <h2>
       <span id="modalTitle">添加到货记录</span>
-      <button class="close-btn" onclick="closeModal()">&times;</button>
+      <button class="close-btn" id="btnCloseModal">&times;</button>
     </h2>
-    <form id="itemForm" onsubmit="saveItem(event)">
+    <form id="itemForm">
       <input type="hidden" id="editId">
       <div class="form-group">
         <label>预计到货日期 *</label>
@@ -171,7 +147,7 @@
       <div class="form-group">
         <label>款号明细（可添加多个）</label>
         <div id="skuRows"></div>
-        <button type="button" class="btn-add-row" onclick="addSkuRow()">+ 添加款号</button>
+        <button type="button" class="btn-add-row" id="btnAddSku">+ 添加款号</button>
       </div>
       <div class="form-group">
         <label>状态</label>
@@ -187,10 +163,10 @@
 
 <!-- 设置弹窗 -->
 <div class="modal-overlay" id="settingsOverlay">
-  <div class="modal" onclick="event.stopPropagation()">
+  <div class="modal" id="settingsContent">
     <h2>
       <span>设置</span>
-      <button class="close-btn" onclick="closeSettings()">&times;</button>
+      <button class="close-btn" id="btnCloseSettings">&times;</button>
     </h2>
     <div class="form-group">
       <label>GitHub 仓库地址</label>
@@ -199,151 +175,157 @@
     <div class="form-group">
       <label>GitHub Token（用于写入数据）</label>
       <input type="password" id="githubToken" placeholder="ghp_xxxxxxxxxxxx">
-      <div style="font-size:11px;color:var(--text-secondary);margin-top:4px">
-        生成方式：GitHub → Settings → Developer settings → Personal access tokens → 勾选 repo 权限
-      </div>
+      <div style="font-size:11px;color:var(--text-secondary);margin-top:4px">生成方式：GitHub → Settings → Developer settings → Personal access tokens → 勾选 repo 权限</div>
     </div>
     <div class="form-group">
       <label>分支</label>
       <input type="text" id="branch" placeholder="main" value="main">
     </div>
-    <button class="btn-submit" onclick="saveSettings()">保存设置</button>
+    <button class="btn-submit" id="btnSaveSettings">保存设置</button>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
+// ===== 全局错误处理 =====
+window.onerror = function(msg, url, line) {
+  console.error('JS错误:', msg, line);
+  showToast('错误: ' + msg);
+  return true;
+};
+
 const COLORS = ['#4f46e5','#0891b2','#059669','#d97706','#dc2626','#7c3aed','#db2777','#0d9488','#ca8a04','#6366f1'];
 let allData = [];
 let currentFilter = 'all';
 let searchQuery = '';
 let dataSha = null;
 let isSaving = false;
-let canEdit = false; // 是否有编辑权限
+let canEdit = false;
+
+// ===== 工具函数 =====
+function genId() { return Date.now().toString(36) + Math.random().toString(36).substr(2, 5); }
+function getColorForStyle(s) { let h = 0; for (let i = 0; i < s.length; i++) h = s.charCodeAt(i) + ((h << 5) - h); return COLORS[Math.abs(h) % COLORS.length]; }
+function escHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function escAttr(s) { return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function formatDate(s) { const d = new Date(s+'T00:00:00'); return (d.getMonth()+1)+'月'+d.getDate()+'日 周'+'日一二三四五六'[d.getDay()]; }
+function showToast(msg) { const el = document.getElementById('toast'); el.textContent = msg; el.classList.add('show'); setTimeout(function() { el.classList.remove('show'); }, 3000); }
 
 // ===== 配置 =====
-function getConfig() { try { return JSON.parse(localStorage.getItem('arrival_config') || '{}'); } catch { return {}; } }
+function getConfig() { try { return JSON.parse(localStorage.getItem('arrival_config') || '{}'); } catch(e) { return {}; } }
 function saveConfig(config) { localStorage.setItem('arrival_config', JSON.stringify(config)); }
 
 function getRepoInfo() {
-  const config = getConfig();
-  const url = config.repoUrl || '';
-  const match = url.match(/github\.com\/([^\/]+)\/([^\/\?#]+)/);
+  var config = getConfig();
+  var url = config.repoUrl || '';
+  var match = url.match(/github\.com\/([^\/]+)\/([^\/\?#]+)/);
   if (!match) return null;
   return { owner: match[1], repo: match[2].replace(/\.git$/, ''), branch: config.branch || 'main', token: config.token || '' };
 }
 
 function getApiUrl() {
-  const info = getRepoInfo();
-  if (info) return `https://api.github.com/repos/${info.owner}/${info.repo}/contents/data.json?ref=${info.branch}`;
-  return 'data.json';
+  var info = getRepoInfo();
+  return info ? 'https://api.github.com/repos/' + info.owner + '/' + info.repo + '/contents/data.json?ref=' + info.branch : 'data.json';
 }
 
 function getRawUrl() {
-  const info = getRepoInfo();
-  if (info) return `https://raw.githubusercontent.com/${info.owner}/${info.repo}/${info.branch}/data.json`;
-  return 'data.json';
+  var info = getRepoInfo();
+  return info ? 'https://raw.githubusercontent.com/' + info.owner + '/' + info.repo + '/' + info.branch + '/data.json' : 'data.json';
 }
 
-// ===== UTF-8 Base64解码 =====
-function decodeBase64UTF8(base64) {
-  const binaryStr = atob(base64);
-  const bytes = new Uint8Array(binaryStr.length);
-  for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
-  return new TextDecoder('utf-8').decode(bytes);
-}
+// ===== 缓存 =====
+function loadCache() { try { var c = localStorage.getItem('arrival_cache'); return c ? JSON.parse(c) : null; } catch(e) { return null; } }
+function saveCache(data) { try { localStorage.setItem('arrival_cache', JSON.stringify(data)); } catch(e) {} }
 
-// ===== 数据读写 =====
-function loadCache() {
-  try { const c = localStorage.getItem('arrival_cache'); return c ? JSON.parse(c) : null; } catch { return null; }
-}
-function saveCache(data) {
-  try { localStorage.setItem('arrival_cache', JSON.stringify(data)); } catch {}
-}
-
+// ===== 数据加载 =====
 async function loadData() {
+  var info = getRepoInfo();
+  if (!info) {
+    try { var r = await fetch('data.json'); return r.ok ? await r.json() : []; } catch(e) { return []; }
+  }
+
+  // 先用缓存立即显示
+  var cached = loadCache();
+  if (cached && cached.length > 0) {
+    allData = cached;
+    render();
+  }
+
+  // 从GitHub拉最新
   try {
-    const info = getRepoInfo();
-    if (info) {
-      // 先用缓存立即显示
-      const cached = loadCache();
-      if (cached) { allData = cached; render(); }
+    var rawResp = await fetch(getRawUrl() + '?t=' + Date.now());
+    if (rawResp.ok) {
+      var data = await rawResp.json();
+      saveCache(data);
+      // 异步获取SHA
+      fetch(getApiUrl(), { headers: info.token ? { 'Authorization': 'token ' + info.token } : {} })
+        .then(function(r) { return r.ok ? r.json() : null; })
+        .then(function(r) { if (r) dataSha = r.sha; })
+        .catch(function() {});
+      return data;
+    }
+  } catch(e) { console.warn('raw读取失败', e); }
 
-      // 后台从GitHub拉最新数据
-      try {
-        const rawResp = await fetch(getRawUrl() + '?t=' + Date.now());
-        if (rawResp.ok) {
-          const data = await rawResp.json();
-          saveCache(data);
-          // 获取SHA（懒加载，保存时才需要）
-          fetch(getApiUrl(), { headers: info.token ? { 'Authorization': `token ${info.token}` } : {} })
-            .then(r => r.ok ? r.json() : null)
-            .then(r => { if (r) dataSha = r.sha; })
-            .catch(() => {});
-          return data;
-        }
-      } catch (e) { console.warn('raw读取失败'); }
-
-      // 降级用API读取
-      const resp = await fetch(getApiUrl(), { headers: info.token ? { 'Authorization': `token ${info.token}` } : {} });
-      if (!resp.ok) throw new Error('读取失败: ' + resp.status);
-      const result = await resp.json();
+  // 降级API
+  try {
+    var resp = await fetch(getApiUrl(), { headers: info.token ? { 'Authorization': 'token ' + info.token } : {} });
+    if (resp.ok) {
+      var result = await resp.json();
       dataSha = result.sha;
-      const data = JSON.parse(decodeBase64UTF8(result.content));
+      var binaryStr = atob(result.content);
+      var bytes = new Uint8Array(binaryStr.length);
+      for (var i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
+      var data = JSON.parse(new TextDecoder('utf-8').decode(bytes));
       saveCache(data);
       return data;
-    } else {
-      const resp = await fetch('data.json');
-      if (!resp.ok) return [];
-      return await resp.json();
     }
-  } catch (err) {
-    console.error('加载数据失败:', err);
-    const cached = loadCache();
-    if (cached) return cached;
-    showToast('加载数据失败: ' + err.message);
-    return [];
-  }
+  } catch(e) { console.error('API读取失败', e); }
+
+  return cached || [];
 }
 
+// ===== 数据保存 =====
 async function saveDataToRemote(data) {
-  const info = getRepoInfo();
-  saveCache(data); // 先存缓存
-  if (!info || !info.token) { showToast('未配置GitHub Token，数据仅保存在本地'); return true; }
+  var info = getRepoInfo();
+  saveCache(data);
+
+  if (!info || !info.token) {
+    showToast('未配置Token，数据仅保存在本地缓存');
+    return true;
+  }
+
   setSyncStatus('saving');
+
   try {
-    // 确保获取到SHA
-    if (!dataSha) {
-      const shaResp = await fetch(getApiUrl(), { headers: { 'Authorization': `token ${info.token}` } });
-      if (shaResp.ok) { const r = await shaResp.json(); dataSha = r.sha; }
-      else { throw new Error('获取文件SHA失败'); }
-    }
-    const jsonStr = JSON.stringify(data, null, 2);
-    const content = btoa(unescape(encodeURIComponent(jsonStr)));
-    const body = { message: `更新到货期数据 ${new Date().toLocaleString('zh-CN')}`, content: content, sha: dataSha, branch: info.branch };
-    const resp = await fetch(getApiUrl(), { method: 'PUT', headers: { 'Authorization': `token ${info.token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-    if (!resp.ok) {
-      const errData = await resp.json().catch(() => ({}));
-      // SHA冲突，重新获取再试一次
-      if (resp.status === 409 || (errData.message && errData.message.includes('SHA'))) {
-        const shaResp2 = await fetch(getApiUrl(), { headers: { 'Authorization': `token ${info.token}` } });
-        if (shaResp2.ok) { const r = await shaResp2.json(); dataSha = r.sha; }
-        body.sha = dataSha;
-        const resp2 = await fetch(getApiUrl(), { method: 'PUT', headers: { 'Authorization': `token ${info.token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-        if (!resp2.ok) throw new Error('保存失败(重试)');
-        const result2 = await resp2.json();
-        dataSha = result2.content.sha;
-      } else {
-        throw new Error(errData.message || '保存失败');
-      }
+    // 获取最新SHA
+    var shaResp = await fetch(getApiUrl(), { headers: { 'Authorization': 'token ' + info.token } });
+    if (shaResp.ok) {
+      var shaData = await shaResp.json();
+      dataSha = shaData.sha;
     } else {
-      const result = await resp.json();
-      dataSha = result.content.sha;
+      throw new Error('获取SHA失败(' + shaResp.status + ')');
     }
+
+    var jsonStr = JSON.stringify(data, null, 2);
+    var content = btoa(unescape(encodeURIComponent(jsonStr)));
+    var body = { message: '更新到货期数据 ' + new Date().toLocaleString('zh-CN'), content: content, sha: dataSha, branch: info.branch };
+
+    var resp = await fetch(getApiUrl(), {
+      method: 'PUT',
+      headers: { 'Authorization': 'token ' + info.token, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+
+    if (!resp.ok) {
+      var errData = await resp.json().catch(function() { return {}; });
+      throw new Error(errData.message || '保存失败(' + resp.status + ')');
+    }
+
+    var result = await resp.json();
+    dataSha = result.content.sha;
     setSyncStatus('synced');
     return true;
-  } catch (err) {
+  } catch(err) {
     console.error('保存失败:', err);
     showToast('保存失败: ' + err.message);
     setSyncStatus('error');
@@ -352,134 +334,148 @@ async function saveDataToRemote(data) {
 }
 
 function setSyncStatus(status) {
-  const dot = document.getElementById('syncDot');
-  const text = document.getElementById('syncText');
+  var dot = document.getElementById('syncDot');
+  var text = document.getElementById('syncText');
   if (status === 'saving') { dot.className = 'dot saving'; text.textContent = '保存中...'; }
   else if (status === 'synced') { dot.className = 'dot'; text.textContent = '已同步'; document.getElementById('lastSync').textContent = new Date().toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'}); }
   else if (status === 'error') { dot.className = 'dot'; dot.style.background = 'var(--danger)'; text.textContent = '同步失败'; }
 }
 
-function genId() { return Date.now().toString(36) + Math.random().toString(36).substr(2, 5); }
-function getColorForStyle(s) { let h = 0; for (let i = 0; i < s.length; i++) h = s.charCodeAt(i) + ((h << 5) - h); return COLORS[Math.abs(h) % COLORS.length]; }
-
 // ===== 渲染 =====
 function render() {
-  const today = new Date().toISOString().split('T')[0];
-  const weekEnd = new Date(Date.now() + 3 * 86400000).toISOString().split('T')[0];
+  try {
+    _doRender();
+  } catch(e) {
+    console.error('渲染错误:', e);
+    showToast('渲染错误: ' + e.message);
+  }
+}
 
-  // 根据权限显示/隐藏元素
+function _doRender() {
+  var today = new Date().toISOString().split('T')[0];
+  var weekEnd = new Date(Date.now() + 3 * 86400000).toISOString().split('T')[0];
+
+  // 权限控制
   document.getElementById('fabBtn').style.display = canEdit ? 'flex' : 'none';
-  document.querySelectorAll('.toolbar button:not(.view-only)').forEach(b => b.style.display = canEdit ? '' : 'none');
+  document.getElementById('btnTemplate').style.display = canEdit ? '' : 'none';
+  document.getElementById('btnImport').style.display = canEdit ? '' : 'none';
   // 导出按钮所有人可见
-  document.querySelector('.toolbar button[onclick="exportCSV()"]').style.display = '';
-  const total = allData.length;
-  const pending = allData.filter(d => d.status === 'pending').length;
-  const overdue = allData.filter(d => d.status === 'pending' && d.arriveDate < today).length;
-  const arrived = allData.filter(d => d.status === 'arrived').length;
 
-  document.getElementById('statsBar').innerHTML = `
-    <div class="stat-card"><div class="num">${total}</div><div class="label">总记录</div></div>
-    <div class="stat-card"><div class="num">${pending}</div><div class="label">待到货</div></div>
-    <div class="stat-card"><div class="num" style="color:var(--danger)">${overdue}</div><div class="label">已逾期</div></div>
-    <div class="stat-card"><div class="num" style="color:var(--success)">${arrived}</div><div class="label">已到货</div></div>`;
-
-  let filtered = allData;
-  if (currentFilter === 'overdue') filtered = allData.filter(d => d.status === 'pending' && d.arriveDate < today);
-  else if (currentFilter === 'today') filtered = allData.filter(d => d.arriveDate === today);
-  else if (currentFilter === 'week') filtered = allData.filter(d => d.arriveDate >= today && d.arriveDate <= weekEnd && d.status === 'pending');
-  else if (currentFilter === 'arrived') filtered = allData.filter(d => d.status === 'arrived');
-
-  if (searchQuery) {
-    const q = searchQuery.toLowerCase();
-    filtered = filtered.filter(d =>
-      (d.styleNo||'').toLowerCase().includes(q) || (d.colorName||'').toLowerCase().includes(q) ||
-      (d.sizeName||'').toLowerCase().includes(q) || (d.remark||'').toLowerCase().includes(q) ||
-      (d.supplier||'').toLowerCase().includes(q));
+  var total = allData.length;
+  var pending = 0, overdue = 0, arrived = 0;
+  for (var i = 0; i < allData.length; i++) {
+    if (allData[i].status === 'arrived') arrived++;
+    else if (allData[i].status === 'pending') {
+      pending++;
+      if (allData[i].arriveDate < today) overdue++;
+    }
   }
 
-  filtered.sort((a, b) => {
+  document.getElementById('statsBar').innerHTML =
+    '<div class="stat-card"><div class="num">' + total + '</div><div class="label">总记录</div></div>' +
+    '<div class="stat-card"><div class="num">' + pending + '</div><div class="label">待到货</div></div>' +
+    '<div class="stat-card"><div class="num" style="color:var(--danger)">' + overdue + '</div><div class="label">已逾期</div></div>' +
+    '<div class="stat-card"><div class="num" style="color:var(--success)">' + arrived + '</div><div class="label">已到货</div></div>';
+
+  var filtered = allData.slice();
+  if (currentFilter === 'overdue') filtered = filtered.filter(function(d) { return d.status === 'pending' && d.arriveDate < today; });
+  else if (currentFilter === 'today') filtered = filtered.filter(function(d) { return d.arriveDate === today; });
+  else if (currentFilter === 'week') filtered = filtered.filter(function(d) { return d.arriveDate >= today && d.arriveDate <= weekEnd && d.status === 'pending'; });
+  else if (currentFilter === 'arrived') filtered = filtered.filter(function(d) { return d.status === 'arrived'; });
+
+  if (searchQuery) {
+    var q = searchQuery.toLowerCase();
+    filtered = filtered.filter(function(d) {
+      return (d.styleNo||'').toLowerCase().indexOf(q) >= 0 || (d.colorName||'').toLowerCase().indexOf(q) >= 0 ||
+        (d.sizeName||'').toLowerCase().indexOf(q) >= 0 || (d.remark||'').toLowerCase().indexOf(q) >= 0 ||
+        (d.supplier||'').toLowerCase().indexOf(q) >= 0;
+    });
+  }
+
+  filtered.sort(function(a, b) {
     if (a.status === 'arrived' && b.status !== 'arrived') return 1;
     if (a.status !== 'arrived' && b.status === 'arrived') return -1;
     return (a.arriveDate||'').localeCompare(b.arriveDate||'');
   });
 
-  // 按日期+供应商+备注分组
-  const groups = {};
-  filtered.forEach(item => {
-    const key = `${item.arriveDate||'未设定'}_${item.supplier||''}_${item.remark||''}`;
-    if (!groups[key]) groups[key] = { date: item.arriveDate || '未设定', supplier: item.supplier, remark: item.remark, status: item.status, items: [] };
+  // 分组
+  var groups = {};
+  for (var i = 0; i < filtered.length; i++) {
+    var item = filtered[i];
+    var key = (item.arriveDate||'未设定') + '_' + (item.supplier||'') + '_' + (item.remark||'');
+    if (!groups[key]) groups[key] = { date: item.arriveDate || '未设定', supplier: item.supplier, remark: item.remark, items: [] };
     groups[key].items.push(item);
-  });
+  }
 
-  const listEl = document.getElementById('itemList');
+  var listEl = document.getElementById('itemList');
   if (filtered.length === 0) {
-    listEl.innerHTML = `<div class="empty"><div class="icon">📦</div><p>${searchQuery ? '没有找到匹配的记录' : '暂无到货记录，点击 + 添加'}</p></div>`;
+    listEl.innerHTML = '<div class="empty"><div class="icon">📦</div><p>' + (searchQuery ? '没有找到匹配的记录' : '暂无到货记录，点击 + 添加') + '</p></div>';
     return;
   }
 
-  let html = '';
-  for (const [key, group] of Object.entries(groups)) {
-    const isOverdue = group.date < today && group.date !== '未设定';
-    const isToday = group.date === today;
-    const dotClass = isOverdue ? 'overdue' : isToday ? 'today' : '';
-    const dateDisplay = group.date === '未设定' ? '未设定日期' : formatDate(group.date);
-    const dayLabel = isToday ? ' 今天' : isOverdue ? ' 逾期' : '';
-    const totalQty = group.items.reduce((s, i) => s + (i.qty || 0), 0);
-    const allArrived = group.items.every(i => i.status === 'arrived');
+  var html = '';
+  var keys = Object.keys(groups);
+  for (var gi = 0; gi < keys.length; gi++) {
+    var group = groups[keys[gi]];
+    var isOverdue = group.date < today && group.date !== '未设定';
+    var isToday = group.date === today;
+    var dotClass = isOverdue ? 'overdue' : isToday ? 'today' : '';
+    var dateDisplay = group.date === '未设定' ? '未设定日期' : formatDate(group.date);
+    var dayLabel = isToday ? ' 今天' : isOverdue ? ' 逾期' : '';
+    var totalQty = 0;
+    for (var j = 0; j < group.items.length; j++) totalQty += (group.items[j].qty || 0);
 
-    html += `<div class="date-group">
-      <div class="date-header">
-        <div class="date-info">
-          <span class="dot ${dotClass}"></span>
-          <span class="date-text">${dateDisplay}${dayLabel}</span>
-          <span class="date-meta">${group.supplier ? group.supplier + ' · ' : ''}${group.items.length}款 ${totalQty}件${group.remark ? ' · ' + esc(group.remark) : ''}</span>
-        </div>
-        <button class="btn-add-sku" data-date="${escAttr(group.date)}" data-supplier="${escAttr(group.supplier||'')}" data-remark="${escAttr(group.remark||'')}" style="${canEdit?'':'display:none'}">+款</button>
-      </div>`;
+    html += '<div class="date-group"><div class="date-header"><div class="date-info">';
+    html += '<span class="dot ' + dotClass + '"></span>';
+    html += '<span class="date-text">' + escHtml(dateDisplay) + dayLabel + '</span>';
+    html += '<span class="date-meta">' + (group.supplier ? escHtml(group.supplier) + ' · ' : '') + group.items.length + '款 ' + totalQty + '件' + (group.remark ? ' · ' + escHtml(group.remark) : '') + '</span>';
+    html += '</div>';
+    if (canEdit) {
+      html += '<button class="btn-add-sku" data-date="' + escAttr(group.date) + '" data-supplier="' + escAttr(group.supplier||'') + '" data-remark="' + escAttr(group.remark||'') + '">+款</button>';
+    }
+    html += '</div>';
 
-    group.items.forEach(item => {
-      const color = getColorForStyle(item.styleNo || '');
-      const initial = (item.styleNo || '?').charAt(0).toUpperCase();
-      const statusClass = item.status === 'arrived' ? 'arrived' : isOverdue ? 'overdue' : 'pending';
-      const statusText = item.status === 'arrived' ? '已到货' : isOverdue ? '逾期' : '待到货';
-      html += `<div class="sku-row" data-id="${escAttr(item.id)}">
-        <div class="color-dot" style="background:${color}">${initial}</div>
-        <div class="info">
-          <div class="title">${esc(item.styleNo||'')} ${esc(item.colorName||'')} ${item.sizeName ? esc(item.sizeName) : ''}</div>
-          <div class="meta"><span class="status-tag ${statusClass}">${statusText}</span></div>
-        </div>
-        <div class="qty">${item.qty}<small>件</small></div>
-        <div class="actions">
-          ${canEdit && item.status === 'pending' ? '<button class="btn-arrived" data-action="arrive">到货</button>' : ''}
-          ${canEdit ? '<button class="btn-sm" data-action="edit">✏</button><button class="btn-sm del" data-action="delete">✕</button>' : ''}
-        </div>
-      </div>`;
-    });
+    for (var ii = 0; ii < group.items.length; ii++) {
+      var item = group.items[ii];
+      var color = getColorForStyle(item.styleNo || '');
+      var initial = (item.styleNo || '?').charAt(0).toUpperCase();
+      var statusClass = item.status === 'arrived' ? 'arrived' : isOverdue ? 'overdue' : 'pending';
+      var statusText = item.status === 'arrived' ? '已到货' : isOverdue ? '逾期' : '待到货';
+
+      html += '<div class="sku-row" data-id="' + escAttr(item.id) + '">';
+      html += '<div class="color-dot" style="background:' + color + '">' + escHtml(initial) + '</div>';
+      html += '<div class="info"><div class="title">' + escHtml(item.styleNo||'') + ' ' + escHtml(item.colorName||'') + ' ' + escHtml(item.sizeName||'') + '</div>';
+      html += '<div class="meta"><span class="status-tag ' + statusClass + '">' + statusText + '</span></div></div>';
+      html += '<div class="qty">' + item.qty + '<small>件</small></div>';
+      if (canEdit) {
+        html += '<div class="actions">';
+        if (item.status === 'pending') html += '<button class="btn-arrived" data-action="arrive">到货</button>';
+        html += '<button class="btn-sm" data-action="edit">✏</button>';
+        html += '<button class="btn-sm" data-action="delete" style="color:var(--danger)">✕</button>';
+        html += '</div>';
+      }
+      html += '</div>';
+    }
     html += '</div>';
   }
   listEl.innerHTML = html;
 }
 
-function formatDate(s) { const d = new Date(s+'T00:00:00'); return `${d.getMonth()+1}月${d.getDate()}日 周${'日一二三四五六'[d.getDay()]}`; }
-function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
-function escAttr(s) { return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-// ===== 弹窗 & SKU行 =====
-let skuRowCount = 0;
+// ===== 弹窗 =====
+var skuRowCount = 0;
 
 function addSkuRow(styleNo, colorName, sizeName, qty) {
   skuRowCount++;
-  const id = skuRowCount;
-  const container = document.getElementById('skuRows');
-  const row = document.createElement('div');
+  var container = document.getElementById('skuRows');
+  var row = document.createElement('div');
   row.className = 'sku-input-row';
-  row.id = `skuRow_${id}`;
-  row.innerHTML = `
-    <input type="text" placeholder="款号" value="${escAttr(styleNo)}" class="sku-style" style="flex:2">
-    <input type="text" placeholder="颜色" value="${escAttr(colorName)}" class="sku-color" style="flex:1.5">
-    <input type="text" placeholder="尺码" value="${escAttr(sizeName)}" class="sku-size" style="flex:1">
-    <input type="number" placeholder="数量" value="${qty||''}" class="sku-qty" style="flex:1" min="0">
-    <button type="button" class="btn-remove" onclick="this.parentElement.remove()">×</button>`;
+  var sInput = document.createElement('input'); sInput.type='text'; sInput.placeholder='款号'; sInput.className='sku-style'; sInput.style.flex='2'; sInput.value = styleNo||'';
+  var cInput = document.createElement('input'); cInput.type='text'; cInput.placeholder='颜色'; cInput.className='sku-color'; cInput.style.flex='1.5'; cInput.value = colorName||'';
+  var zInput = document.createElement('input'); zInput.type='text'; zInput.placeholder='尺码'; zInput.className='sku-size'; zInput.style.flex='1'; zInput.value = sizeName||'';
+  var qInput = document.createElement('input'); qInput.type='number'; qInput.placeholder='数量'; qInput.className='sku-qty'; qInput.style.flex='1'; qInput.min='0'; qInput.value = qty||'';
+  var rmBtn = document.createElement('button'); rmBtn.type='button'; rmBtn.className='btn-remove'; rmBtn.textContent='×';
+  rmBtn.addEventListener('click', function() { row.remove(); });
+  row.appendChild(sInput); row.appendChild(cInput); row.appendChild(zInput); row.appendChild(qInput); row.appendChild(rmBtn);
   container.appendChild(row);
 }
 
@@ -509,85 +505,24 @@ function openModal(item, presetDate, presetSupplier, presetRemark) {
 
 function closeModal() { document.getElementById('modalOverlay').classList.remove('active'); }
 
-// 给某个日期组添加款号
-function addSkuToDate(date, supplier, remark) {
-  openModal(null, date, supplier, remark);
-  // 默认添加一个空行
-  // 已经在openModal里addSkuRow了
-}
-
-// ===== 设置 =====
-function openSettings() {
-  const config = getConfig();
-  document.getElementById('repoUrl').value = config.repoUrl || '';
-  document.getElementById('githubToken').value = config.token || '';
-  document.getElementById('branch').value = config.branch || 'main';
-  document.getElementById('settingsOverlay').classList.add('active');
-}
-function closeSettings() { document.getElementById('settingsOverlay').classList.remove('active'); }
-function saveSettings() {
-  saveConfig({ repoUrl: document.getElementById('repoUrl').value.trim(), token: document.getElementById('githubToken').value.trim(), branch: document.getElementById('branch').value.trim() || 'main' });
-  canEdit = !!(getConfig().token);
-  closeSettings();
-  showToast('设置已保存，正在重新加载...');
-  refreshData();
-}
-
 // ===== CRUD =====
-async function saveItem(e) {
-  e.preventDefault();
-  if (isSaving) return;
-  isSaving = true;
-
-  const editId = document.getElementById('editId').value;
-  const arriveDate = document.getElementById('arriveDate').value;
-  const supplier = document.getElementById('supplier').value.trim();
-  const remark = document.getElementById('remark').value.trim();
-  const status = document.getElementById('status').value;
-
-  // 收集所有SKU行
-  const skuRows = document.querySelectorAll('#skuRows .sku-input-row');
-  const items = [];
-  skuRows.forEach(row => {
-    const styleNo = row.querySelector('.sku-style').value.trim();
-    const colorName = row.querySelector('.sku-color').value.trim();
-    const sizeName = row.querySelector('.sku-size').value.trim();
-    const qty = parseInt(row.querySelector('.sku-qty').value) || 0;
-    if (!styleNo) return;
-    items.push({ styleNo, colorName, sizeName, qty });
-  });
-
-  if (items.length === 0) { showToast('请至少填写一个款号'); isSaving = false; return; }
-
-  if (editId) {
-    // 编辑模式：更新单条
-    const idx = allData.findIndex(d => d.id === editId);
-    if (idx >= 0) {
-      allData[idx] = { ...allData[idx], styleNo: items[0].styleNo, colorName: items[0].colorName, sizeName: items[0].sizeName, qty: items[0].qty, arriveDate, supplier, remark, status, updatedAt: new Date().toISOString() };
-    }
-  } else {
-    // 新增模式：每个SKU一条记录
-    items.forEach(item => {
-      allData.push({
-        id: genId(), styleNo: item.styleNo, colorName: item.colorName, sizeName: item.sizeName, qty: item.qty,
-        arriveDate, supplier, remark, status, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
-      });
-    });
-  }
-
-  const ok = await saveDataToRemote(allData);
-  if (ok) { closeModal(); render(); }
-  isSaving = false;
+function editItem(id) {
+  console.log('editItem:', id);
+  var item = null;
+  for (var i = 0; i < allData.length; i++) { if (allData[i].id === id) { item = allData[i]; break; } }
+  if (item) openModal(item);
+  else showToast('找不到该记录');
 }
-
-function editItem(id) { const item = allData.find(d => d.id === id); if (item) openModal(item); }
 
 async function deleteItem(id) {
   if (!confirm('确定删除？')) return;
   if (isSaving) return;
   isSaving = true;
-  allData = allData.filter(d => d.id !== id);
-  await saveDataToRemote(allData);
+  var newData = [];
+  for (var i = 0; i < allData.length; i++) { if (allData[i].id !== id) newData.push(allData[i]); }
+  allData = newData;
+  var ok = await saveDataToRemote(allData);
+  if (ok) showToast('删除成功');
   render();
   isSaving = false;
 }
@@ -595,143 +530,221 @@ async function deleteItem(id) {
 async function markArrived(id) {
   if (isSaving) return;
   isSaving = true;
-  const item = allData.find(d => d.id === id);
-  if (item) { item.status = 'arrived'; item.updatedAt = new Date().toISOString(); }
+  for (var i = 0; i < allData.length; i++) {
+    if (allData[i].id === id) { allData[i].status = 'arrived'; allData[i].updatedAt = new Date().toISOString(); break; }
+  }
   await saveDataToRemote(allData);
   render();
   isSaving = false;
 }
 
-async function refreshData() { allData = await loadData(); render(); }
+async function refreshData() {
+  allData = await loadData();
+  render();
+}
 
-// ===== 筛选 =====
-document.getElementById('filterTabs').addEventListener('click', e => {
-  const tab = e.target.closest('.filter-tab');
+// ===== 事件绑定 =====
+document.getElementById('fabBtn').addEventListener('click', function(e) { e.preventDefault(); openModal(); });
+document.getElementById('btnCloseModal').addEventListener('click', closeModal);
+document.getElementById('btnCloseSettings').addEventListener('click', function() { document.getElementById('settingsOverlay').classList.remove('active'); });
+document.getElementById('modalOverlay').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
+document.getElementById('settingsOverlay').addEventListener('click', function(e) { if (e.target === this) document.getElementById('settingsOverlay').classList.remove('active'); });
+document.getElementById('btnRefresh').addEventListener('click', refreshData);
+document.getElementById('btnSettings').addEventListener('click', function() {
+  var config = getConfig();
+  document.getElementById('repoUrl').value = config.repoUrl || '';
+  document.getElementById('githubToken').value = config.token || '';
+  document.getElementById('branch').value = config.branch || 'main';
+  document.getElementById('settingsOverlay').classList.add('active');
+});
+document.getElementById('btnAddSku').addEventListener('click', function() { addSkuRow('', '', '', ''); });
+document.getElementById('btnTemplate').addEventListener('click', function() {
+  var csv = '\uFEFF款号,颜色,尺码,数量,预计到货日期,供应商,备注,状态\nA685,黑色,M,50,2026-06-15,N,加单,待到货\n';
+  var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = '到货期导入模板.csv'; a.click();
+});
+document.getElementById('btnExport').addEventListener('click', function() {
+  if (allData.length === 0) { alert('暂无数据'); return; }
+  var keys = ['styleNo','colorName','sizeName','qty','arriveDate','supplier','remark','status'];
+  var headers = ['款号','颜色','尺码','数量','预计到货日期','供应商','备注','状态'];
+  var csv = '\uFEFF' + headers.join(',') + '\n';
+  allData.forEach(function(item) {
+    var row = keys.map(function(k) { var v = String(item[k]||''); if (v.indexOf(',')>=0||v.indexOf('\n')>=0||v.indexOf('"')>=0) v = '"'+v.replace(/"/g,'""')+'"'; return v; });
+    csv += row.join(',') + '\n';
+  });
+  var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = '到货期数据_' + new Date().toISOString().split('T')[0] + '.csv'; a.click();
+});
+document.getElementById('btnImport').addEventListener('click', function() { document.getElementById('importInput').click(); });
+document.getElementById('importInput').addEventListener('change', function(event) {
+  var file = event.target.files[0]; if (!file) return;
+  var reader = new FileReader();
+  reader.onload = async function(e) {
+    try {
+      var imported;
+      if (file.name.endsWith('.json')) { imported = JSON.parse(e.target.result); if (!Array.isArray(imported)) throw new Error('JSON格式错误'); }
+      else { imported = parseCSV(e.target.result); }
+      var existingKeys = {};
+      for (var i = 0; i < allData.length; i++) existingKeys[allData[i].styleNo + '_' + (allData[i].colorName||'') + '_' + (allData[i].sizeName||'') + '_' + allData[i].arriveDate] = true;
+      var added = 0;
+      for (var j = 0; j < imported.length; j++) {
+        var item = imported[j];
+        if (!item.styleNo) continue;
+        var key = item.styleNo + '_' + (item.colorName||'') + '_' + (item.sizeName||'') + '_' + item.arriveDate;
+        if (existingKeys[key]) continue;
+        if (!item.id) item.id = genId();
+        item.createdAt = item.createdAt || new Date().toISOString();
+        item.updatedAt = new Date().toISOString();
+        allData.push(item); added++;
+      }
+      await saveDataToRemote(allData);
+      render();
+      showToast('导入成功！新增 ' + added + ' 条');
+    } catch(err) { showToast('导入失败：' + err.message); }
+  };
+  reader.readAsText(file, 'utf-8');
+  event.target.value = '';
+});
+
+document.getElementById('btnSaveSettings').addEventListener('click', function() {
+  saveConfig({ repoUrl: document.getElementById('repoUrl').value.trim(), token: document.getElementById('githubToken').value.trim(), branch: document.getElementById('branch').value.trim() || 'main' });
+  canEdit = !!(getConfig().token);
+  document.getElementById('settingsOverlay').classList.remove('active');
+  showToast('设置已保存，正在重新加载...');
+  refreshData();
+});
+
+document.getElementById('itemForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  if (isSaving) return;
+  isSaving = true;
+
+  var editId = document.getElementById('editId').value;
+  var arriveDate = document.getElementById('arriveDate').value;
+  var supplier = document.getElementById('supplier').value.trim();
+  var remark = document.getElementById('remark').value.trim();
+  var status = document.getElementById('status').value;
+
+  var skuRows = document.querySelectorAll('#skuRows .sku-input-row');
+  var items = [];
+  for (var i = 0; i < skuRows.length; i++) {
+    var row = skuRows[i];
+    var styleNo = row.querySelector('.sku-style').value.trim();
+    var colorName = row.querySelector('.sku-color').value.trim();
+    var sizeName = row.querySelector('.sku-size').value.trim();
+    var qty = parseInt(row.querySelector('.sku-qty').value) || 0;
+    if (!styleNo) continue;
+    items.push({ styleNo: styleNo, colorName: colorName, sizeName: sizeName, qty: qty });
+  }
+
+  if (items.length === 0) { showToast('请至少填写一个款号'); isSaving = false; return; }
+
+  if (editId) {
+    for (var i = 0; i < allData.length; i++) {
+      if (allData[i].id === editId) {
+        allData[i].styleNo = items[0].styleNo; allData[i].colorName = items[0].colorName;
+        allData[i].sizeName = items[0].sizeName; allData[i].qty = items[0].qty;
+        allData[i].arriveDate = arriveDate; allData[i].supplier = supplier;
+        allData[i].remark = remark; allData[i].status = status;
+        allData[i].updatedAt = new Date().toISOString();
+        break;
+      }
+    }
+  } else {
+    for (var i = 0; i < items.length; i++) {
+      allData.push({
+        id: genId(), styleNo: items[i].styleNo, colorName: items[i].colorName, sizeName: items[i].sizeName, qty: items[i].qty,
+        arriveDate: arriveDate, supplier: supplier, remark: remark, status: status,
+        createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
+      });
+    }
+  }
+
+  var ok = await saveDataToRemote(allData);
+  if (ok) { closeModal(); render(); showToast(editId ? '保存成功' : '添加成功'); }
+  isSaving = false;
+});
+
+// 列表事件委托
+document.getElementById('itemList').addEventListener('click', function(e) {
+  var target = e.target;
+
+  // +款按钮
+  var addBtn = target.closest('.btn-add-sku');
+  if (addBtn) {
+    openModal(null, addBtn.dataset.date, addBtn.dataset.supplier, addBtn.dataset.remark);
+    return;
+  }
+
+  // 操作按钮
+  var actionBtn = target.closest('[data-action]');
+  if (!actionBtn) return;
+
+  var row = actionBtn.closest('.sku-row');
+  if (!row) return;
+
+  var id = row.dataset.id;
+  var action = actionBtn.dataset.action;
+
+  if (action === 'arrive') markArrived(id);
+  else if (action === 'edit') editItem(id);
+  else if (action === 'delete') deleteItem(id);
+});
+
+// 筛选
+document.getElementById('filterTabs').addEventListener('click', function(e) {
+  var tab = e.target.closest('.filter-tab');
   if (!tab) return;
-  document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+  var tabs = document.querySelectorAll('.filter-tab');
+  for (var i = 0; i < tabs.length; i++) tabs[i].classList.remove('active');
   tab.classList.add('active');
   currentFilter = tab.dataset.filter;
   render();
 });
 
-// ===== 搜索 =====
-let searchTimer;
-document.getElementById('searchInput').addEventListener('input', e => {
+// 搜索
+var searchTimer;
+document.getElementById('searchInput').addEventListener('input', function(e) {
   clearTimeout(searchTimer);
-  searchTimer = setTimeout(() => { searchQuery = e.target.value.trim(); render(); }, 200);
+  searchTimer = setTimeout(function() { searchQuery = e.target.value.trim(); render(); }, 200);
 });
 
-// ===== Toast =====
-function showToast(msg) { const el = document.getElementById('toast'); el.textContent = msg; el.classList.add('show'); setTimeout(() => el.classList.remove('show'), 3000); }
-
-// ===== 导入导出 =====
-function downloadTemplate() {
-  const csv = '\uFEFF款号,颜色,尺码,数量,预计到货日期,供应商,备注,状态\nA685,黑色,M,50,2026-06-15,N,加单,待到货\n9002,灰色,TU,100,2026-06-20,SD,,待到货\n';
-  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = '到货期导入模板.csv'; a.click();
-}
-
-function exportCSV() {
-  if (allData.length === 0) { alert('暂无数据'); return; }
-  const keys = ['styleNo','colorName','sizeName','qty','arriveDate','supplier','remark','status'];
-  const headers = ['款号','颜色','尺码','数量','预计到货日期','供应商','备注','状态'];
-  let csv = '\uFEFF' + headers.join(',') + '\n';
-  allData.forEach(item => {
-    const row = keys.map(k => { let v = (item[k]||'').toString(); if (v.includes(',')||v.includes('\n')||v.includes('"')) v = '"'+v.replace(/"/g,'""')+'"'; return v; });
-    csv += row.join(',') + '\n';
-  });
-  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = `到货期数据_${new Date().toISOString().split('T')[0]}.csv`; a.click();
-}
-
-async function importData(event) {
-  const file = event.target.files[0]; if (!file) return;
-  const reader = new FileReader();
-  reader.onload = async (e) => {
-    try {
-      let imported;
-      if (file.name.endsWith('.json')) { imported = JSON.parse(e.target.result); if (!Array.isArray(imported)) throw new Error('JSON格式错误'); }
-      else { imported = parseCSV(e.target.result); }
-      const existingKeys = new Set(allData.map(d => `${d.styleNo}_${d.colorName||''}_${d.sizeName||''}_${d.arriveDate||''}`));
-      let added = 0;
-      imported.forEach(item => {
-        if (!item.styleNo) return;
-        const key = `${item.styleNo}_${item.colorName||''}_${item.sizeName||''}_${item.arriveDate||''}`;
-        if (existingKeys.has(key)) return;
-        if (!item.id) item.id = genId();
-        item.createdAt = item.createdAt || new Date().toISOString();
-        item.updatedAt = new Date().toISOString();
-        allData.push(item); added++;
-      });
-      await saveDataToRemote(allData);
-      render();
-      showToast(`导入成功！新增 ${added} 条，跳过 ${imported.length - added} 条`);
-    } catch (err) { showToast('导入失败：' + err.message); }
-  };
-  reader.readAsText(file, 'utf-8');
-  event.target.value = '';
-}
-
+// CSV解析
 function parseCSV(text) {
-  const lines = text.replace(/^\uFEFF/,'').split(/\r?\n/).filter(l=>l.trim());
+  var lines = text.replace(/^\uFEFF/,'').split(/\r?\n/).filter(function(l){return l.trim();});
   if (lines.length < 2) throw new Error('CSV文件为空');
-  const headers = parseCSVLine(lines[0]).map(h=>h.trim());
-  const map = {'款号':'styleNo','款式编码':'styleNo','颜色':'colorName','颜色尺码':'colorName','尺码':'sizeName','尺寸':'sizeName','数量':'qty','到货数量':'qty','未到货数量':'qty','预计到货日期':'arriveDate','到货日期':'arriveDate','日期':'arriveDate','供应商':'supplier','备注':'remark','状态':'status'};
-  const fields = headers.map(h=>map[h]||null);
-  if (!fields.includes('styleNo')) throw new Error('CSV缺少"款号"列');
-  const result = [];
-  for (let i=1;i<lines.length;i++) {
-    const values = parseCSVLine(lines[i]);
+  var headers = parseCSVLine(lines[0]).map(function(h){return h.trim();});
+  var map = {'款号':'styleNo','款式编码':'styleNo','颜色':'colorName','尺码':'sizeName','尺寸':'sizeName','数量':'qty','预计到货日期':'arriveDate','到货日期':'arriveDate','供应商':'supplier','备注':'remark','状态':'status'};
+  var fields = headers.map(function(h){return map[h]||null;});
+  if (fields.indexOf('styleNo') < 0) throw new Error('CSV缺少"款号"列');
+  var result = [];
+  for (var i=1;i<lines.length;i++) {
+    var values = parseCSVLine(lines[i]);
     if (!values.length || (values.length===1 && !values[0].trim())) continue;
-    const item = {};
-    fields.forEach((f,idx)=>{ if(f) item[f]=(values[idx]||'').trim(); });
+    var item = {};
+    for (var j=0;j<fields.length;j++) { if(fields[j]) item[fields[j]] = (values[j]||'').trim(); }
     if (item.qty) item.qty = parseInt(item.qty)||0;
-    item.status = (item.status && (item.status.includes('已到')||item.status==='arrived')) ? 'arrived' : 'pending';
+    item.status = (item.status && (item.status.indexOf('已到')>=0||item.status==='arrived')) ? 'arrived' : 'pending';
     result.push(item);
   }
   return result;
 }
 
 function parseCSVLine(line) {
-  const result = []; let current = ''; let inQ = false;
-  for (let i=0;i<line.length;i++) {
-    const ch = line[i];
+  var result = []; var current = ''; var inQ = false;
+  for (var i=0;i<line.length;i++) {
+    var ch = line[i];
     if (inQ) { if (ch==='"'&&line[i+1]==='"') { current+='"'; i++; } else if (ch==='"') inQ=false; else current+=ch; }
     else { if (ch==='"') inQ=true; else if (ch===',') { result.push(current); current=''; } else current+=ch; }
   }
   result.push(current); return result;
 }
 
-// ===== 事件 =====
-document.getElementById('fabBtn').addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); openModal(); });
-document.getElementById('modalOverlay').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
-document.getElementById('settingsOverlay').addEventListener('click', function(e) { if (e.target === this) closeSettings(); });
-// 事件委托：列表内所有按钮
-document.getElementById('itemList').addEventListener('click', function(e) {
-  const btn = e.target.closest('[data-action]');
-  if (!btn) {
-    const addBtn = e.target.closest('.btn-add-sku');
-    if (addBtn) addSkuToDate(addBtn.dataset.date, addBtn.dataset.supplier, addBtn.dataset.remark);
-    return;
-  }
-  const row = btn.closest('.sku-row');
-  if (!row) return;
-  const id = row.dataset.id;
-  const action = btn.dataset.action;
-  if (action === 'arrive') markArrived(id);
-  else if (action === 'edit') editItem(id);
-  else if (action === 'delete') deleteItem(id);
-});
-
-// ===== 网络状态 =====
-window.addEventListener('online', () => showToast('网络已恢复'));
-window.addEventListener('offline', () => showToast('网络已断开'));
-
 // ===== 初始化 =====
 (async function init() {
-  const config = getConfig();
+  var config = getConfig();
   canEdit = !!(config.token);
   allData = await loadData();
   render();
-  if (!config.repoUrl && allData.length <= 2) showToast('请先点击「设置」配置GitHub仓库地址和Token');
+  if (!config.repoUrl) showToast('请先点击「设置」配置GitHub仓库');
 })();
 </script>
 </body>
