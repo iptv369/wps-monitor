@@ -3,7 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>到货期管理</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>到货期管理 v2</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%234f46e5'/><text x='50' y='68' font-size='50' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'>到</text></svg>">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
@@ -139,7 +142,7 @@
 </div>
 
 <div class="search-bar">
-  <input type="text" id="searchInput" placeholder="搜索款号、颜色、备注...">
+  <input type="text" id="searchInput" placeholder="搜索款号、颜色、备注..." autocomplete="off">
 </div>
 
 <div class="stats" id="statsBar"></div>
@@ -435,6 +438,7 @@ function _doRender() {
   if (!allData || !Array.isArray(allData)) {
     allData = loadCache() || [];
   }
+  console.log('[render] allData:', allData.length, 'filter:', currentFilter, 'search:', searchQuery);
 
   var today = new Date().toISOString().split('T')[0];
   var weekEnd = new Date(Date.now() + 3 * 86400000).toISOString().split('T')[0];
@@ -493,7 +497,13 @@ function _doRender() {
 
   var listEl = document.getElementById('itemList');
   if (filtered.length === 0) {
-    listEl.innerHTML = '<div class="empty"><div class="icon">📦</div><p>' + (searchQuery ? '没有找到匹配的记录' : '暂无到货记录，点击 + 添加') + '</p></div>';
+    var debugInfo = '<div class="empty"><div class="icon">📦</div><p>' + (searchQuery ? '没有找到匹配的记录' : '暂无到货记录，点击 + 添加') + '</p>';
+    debugInfo += '<p style="font-size:11px;color:#999;margin-top:8px">总数据:' + allData.length + '条 | 筛选:' + currentFilter + ' | 搜索:"' + escHtml(searchQuery) + '"</p>';
+    if (allData.length === 0) {
+      debugInfo += '<button type="button" onclick="forceReload()" style="margin-top:12px;padding:8px 16px;border:1px solid #ccc;border-radius:8px;background:white;cursor:pointer">重新加载数据</button>';
+    }
+    debugInfo += '</div>';
+    listEl.innerHTML = debugInfo;
     return;
   }
 
@@ -675,6 +685,22 @@ function fallbackCopy(text) {
   try { document.execCommand('copy'); showToast('已复制，可粘贴到微信转发'); }
   catch(e) { showToast('复制失败，请手动复制'); }
   document.body.removeChild(ta);
+}
+
+// ===== 强制重新加载 =====
+function forceReload() {
+  searchQuery = '';
+  document.getElementById('searchInput').value = '';
+  currentFilter = 'all';
+  var tabs = document.querySelectorAll('.filter-tab');
+  for (var i = 0; i < tabs.length; i++) tabs[i].classList.remove('active');
+  tabs[0].classList.add('active');
+  allData = loadCache() || [];
+  if (allData.length > 0) {
+    render();
+  } else {
+    refreshData();
+  }
 }
 
 async function refreshData() {
@@ -1051,22 +1077,33 @@ function ensureRendered() {
 (async function init() {
   var config = getConfig();
   canEdit = !!(config.token);
+  console.log('[init] config:', config.repoUrl ? '已配置' : '未配置', 'canEdit:', canEdit);
 
   // 安全超时：5秒后强制渲染（防止网络挂起导致一直加载中）
   setTimeout(ensureRendered, 5000);
 
   try {
     var data = await loadData();
+    console.log('[init] loadData返回:', data ? data.length : 'null');
     if (data && data.length > 0) {
       allData = data;
-    } else if (allData.length === 0) {
-      allData = loadCache() || [];
+    } else {
+      // loadData返回空，尝试从缓存恢复
+      var cached = loadCache();
+      console.log('[init] 缓存:', cached ? cached.length : 'null');
+      if (cached && cached.length > 0) {
+        allData = cached;
+      }
     }
   } catch(e) {
     console.error('加载失败:', e);
-    if (allData.length === 0) allData = loadCache() || [];
+    var cached = loadCache();
+    if (cached && cached.length > 0) {
+      allData = cached;
+    }
   }
   _initDone = true;
+  console.log('[init] allData:', allData.length, 'searchQuery:', searchQuery);
   render();
   if (!config.repoUrl) showToast('请先点击「设置」配置GitHub仓库');
 })();
