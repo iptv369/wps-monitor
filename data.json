@@ -10307,5 +10307,31 @@
     "id": "mq4lhfnq03va7",
     "createdAt": "2026-06-08T02:31:40.934Z",
     "updatedAt": "2026-06-08T02:31:40.934Z"
+  },
+  {
+    "id": "mq4ltohgoo1vn",
+    "styleNo": "BG246",
+    "colorName": "黑色",
+    "sizeName": "M",
+    "qty": 30,
+    "arriveDate": "2026-06-19",
+    "supplier": "N",
+    "remark": "加单次数：-3贝丽订货",
+    "status": "pending",
+    "createdAt": "2026-06-08T02:41:12.244Z",
+    "updatedAt": "2026-06-08T02:41:12.244Z"
+  },
+  {
+    "id": "mq4ltohgyu45f",
+    "styleNo": "BG246",
+    "colorName": "黑色",
+    "sizeName": "L",
+    "qty": 20,
+    "arriveDate": "2026-06-19",
+    "supplier": "N",
+    "remark": "加单次数：-3贝丽订货",
+    "status": "pending",
+    "createdAt": "2026-06-08T02:41:12.244Z",
+    "updatedAt": "2026-06-08T02:41:12.244Z"
   }
 ]
