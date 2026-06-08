@@ -10203,5 +10203,18 @@
     "id": "mq3i2hek55omx",
     "createdAt": "2026-06-07T08:08:18.332Z",
     "updatedAt": "2026-06-07T08:08:18.332Z"
+  },
+  {
+    "id": "mq4ksfzrocxm2",
+    "styleNo": "H114",
+    "colorName": "",
+    "sizeName": "M",
+    "qty": 10,
+    "arriveDate": "2026-06-22",
+    "supplier": "N",
+    "remark": "加单-7",
+    "status": "pending",
+    "createdAt": "2026-06-08T02:12:14.967Z",
+    "updatedAt": "2026-06-08T02:12:14.967Z"
   }
 ]
