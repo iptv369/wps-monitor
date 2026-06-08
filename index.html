@@ -64,6 +64,7 @@
   .status-tag.arrived { background: #dcfce7; color: #166534; }
   .status-tag.overdue { background: #fee2e2; color: #991b1b; }
   .date-label { font-size: 11px; color: var(--primary); font-weight: 600; }
+  .style-divider { height: 1px; background: var(--border); margin: 6px 12px; }
   .empty { text-align: center; padding: 50px 20px; color: var(--text-secondary); }
   .empty .icon { font-size: 42px; margin-bottom: 10px; }
   .empty p { font-size: 14px; }
@@ -558,27 +559,40 @@ function _doRender() {
 
     html += '<div class="date-items' + collapsedClass + '">';
 
+    // 按款号分组
+    var styleGroups = {};
+    var styleOrder = [];
     for (var ii = 0; ii < group.items.length; ii++) {
-      var item = group.items[ii];
-      var color = getColorForStyle(item.styleNo || '');
-      var initial = (item.styleNo || '?').charAt(0).toUpperCase();
-      var statusClass = item.status === 'arrived' ? 'arrived' : isOverdue ? 'overdue' : 'pending';
-      var statusText = item.status === 'arrived' ? '已到货' : isOverdue ? '逾期' : '待到货';
-      var dateLabel = group.date !== '未设定' ? formatDate(group.date) + '货期' : '';
+      var sKey = group.items[ii].styleNo || '';
+      if (!styleGroups[sKey]) { styleGroups[sKey] = []; styleOrder.push(sKey); }
+      styleGroups[sKey].push(group.items[ii]);
+    }
 
-      html += '<div class="sku-row" data-id="' + escAttr(item.id) + '">';
-      html += '<div class="color-dot" style="background:' + color + '">' + escHtml(initial) + '</div>';
-      html += '<div class="info"><div class="title">' + escHtml(item.styleNo||'') + ' ' + escHtml(item.colorName||'') + ' ' + escHtml(item.sizeName||'') + '</div>';
-      html += '<div class="meta"><span class="status-tag ' + statusClass + '">' + statusText + '</span>' + (dateLabel ? ' <span class="date-label">' + escHtml(dateLabel) + '</span>' : '') + '</div></div>';
-      html += '<div class="qty">' + item.qty + '<small>件</small></div>';
-      if (canEdit) {
-        html += '<div class="actions">';
-        if (item.status === 'pending') html += '<button type="button" class="btn-arrived" data-action="arrive">到货</button>';
-        html += '<button type="button" class="btn-sm" data-action="edit">✏</button>';
-        html += '<button type="button" class="btn-sm" data-action="delete" style="color:var(--danger)">✕</button>';
+    for (var si = 0; si < styleOrder.length; si++) {
+      if (si > 0) html += '<div class="style-divider"></div>';
+      var styleItems = styleGroups[styleOrder[si]];
+      for (var ti = 0; ti < styleItems.length; ti++) {
+        var item = styleItems[ti];
+        var color = getColorForStyle(item.styleNo || '');
+        var initial = (item.styleNo || '?').charAt(0).toUpperCase();
+        var statusClass = item.status === 'arrived' ? 'arrived' : isOverdue ? 'overdue' : 'pending';
+        var statusText = item.status === 'arrived' ? '已到货' : isOverdue ? '逾期' : '待到货';
+        var dateLabel = group.date !== '未设定' ? formatDate(group.date) + '货期' : '';
+
+        html += '<div class="sku-row" data-id="' + escAttr(item.id) + '">';
+        html += '<div class="color-dot" style="background:' + color + '">' + escHtml(initial) + '</div>';
+        html += '<div class="info"><div class="title">' + escHtml(item.styleNo||'') + ' ' + escHtml(item.colorName||'') + ' ' + escHtml(item.sizeName||'') + '</div>';
+        html += '<div class="meta"><span class="status-tag ' + statusClass + '">' + statusText + '</span>' + (dateLabel ? ' <span class="date-label">' + escHtml(dateLabel) + '</span>' : '') + '</div></div>';
+        html += '<div class="qty">' + item.qty + '<small>件</small></div>';
+        if (canEdit) {
+          html += '<div class="actions">';
+          if (item.status === 'pending') html += '<button type="button" class="btn-arrived" data-action="arrive">到货</button>';
+          html += '<button type="button" class="btn-sm" data-action="edit">✏</button>';
+          html += '<button type="button" class="btn-sm" data-action="delete" style="color:var(--danger)">✕</button>';
+          html += '</div>';
+        }
         html += '</div>';
       }
-      html += '</div>';
     }
     html += '</div></div>';
   }
