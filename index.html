@@ -142,7 +142,7 @@
 </div>
 
 <div class="search-bar">
-  <input type="text" id="searchInput" placeholder="搜索款号、颜色、备注..." autocomplete="off">
+  <input type="text" id="searchInput" name="arrival_search" placeholder="搜索款号、颜色、备注..." autocomplete="off">
 </div>
 
 <div class="stats" id="statsBar"></div>
@@ -222,7 +222,7 @@
     </h2>
     <div class="form-group">
       <label>GitHub 仓库地址</label>
-      <input type="text" id="repoUrl" placeholder="如 https://github.com/用户名/仓库名">
+      <input type="text" id="repoUrl" name="repo_url" placeholder="如 https://github.com/用户名/仓库名" autocomplete="off">
     </div>
     <div class="form-group">
       <label>GitHub Token（用于写入数据）</label>
@@ -704,6 +704,9 @@ function forceReload() {
 }
 
 async function refreshData() {
+  // 清除搜索（防止浏览器自动填充）
+  document.getElementById('searchInput').value = '';
+  searchQuery = '';
   try {
     var data = await loadData();
     if (data && data.length > 0) {
@@ -1070,6 +1073,9 @@ var _initDone = false;
 function ensureRendered() {
   if (_initDone) return;
   _initDone = true;
+  // 清除浏览器自动填充
+  document.getElementById('searchInput').value = '';
+  searchQuery = '';
   if (!allData || allData.length === 0) allData = loadCache() || [];
   render();
 }
@@ -1078,6 +1084,10 @@ function ensureRendered() {
   var config = getConfig();
   canEdit = !!(config.token);
   console.log('[init] config:', config.repoUrl ? '已配置' : '未配置', 'canEdit:', canEdit);
+
+  // 清除浏览器自动填充的搜索值
+  document.getElementById('searchInput').value = '';
+  searchQuery = '';
 
   // 安全超时：5秒后强制渲染（防止网络挂起导致一直加载中）
   setTimeout(ensureRendered, 5000);
