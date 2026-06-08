@@ -248,6 +248,7 @@ let searchQuery = '';
 let dataSha = null;
 let isSaving = false;
 let canEdit = false;
+let expandedGroups = {}; // 记住展开的组
 
 // ===== 工具函数 =====
 function genId() { return Date.now().toString(36) + Math.random().toString(36).substr(2, 5); }
@@ -508,7 +509,7 @@ function _doRender() {
     var totalQty = 0;
     for (var j = 0; j < group.items.length; j++) totalQty += (group.items[j].qty || 0);
 
-    var collapsedClass = searchQuery ? '' : ' collapsed';
+    var collapsedClass = (searchQuery || expandedGroups[keys[gi]]) ? '' : ' collapsed';
     html += '<div class="date-group" data-group-key="' + escAttr(keys[gi]) + '">';
     html += '<div class="date-header' + collapsedClass + '"><div class="date-info">';
     html += '<span class="toggle-icon">▼</span>';
@@ -958,9 +959,16 @@ document.getElementById('itemList').addEventListener('click', function(e) {
   if (header) {
     var group = header.closest('.date-group');
     if (group) {
+      var groupKey = group.dataset.groupKey;
       var items = group.querySelector('.date-items');
       header.classList.toggle('collapsed');
       if (items) items.classList.toggle('collapsed');
+      // 记住展开状态
+      if (header.classList.contains('collapsed')) {
+        delete expandedGroups[groupKey];
+      } else {
+        expandedGroups[groupKey] = true;
+      }
     }
     return;
   }
