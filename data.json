@@ -10203,18 +10203,5 @@
     "id": "mq3i2hek55omx",
     "createdAt": "2026-06-07T08:08:18.332Z",
     "updatedAt": "2026-06-07T08:08:18.332Z"
-  },
-  {
-    "supplier": "SD",
-    "arriveDate": "2026-06-08",
-    "remark": "加单次数：-16",
-    "styleNo": "G112",
-    "qty": 100,
-    "colorName": "深灰",
-    "sizeName": "TU",
-    "status": "pending",
-    "id": "mq3i2hekctbq1",
-    "createdAt": "2026-06-07T08:08:18.332Z",
-    "updatedAt": "2026-06-07T08:08:18.332Z"
   }
 ]
