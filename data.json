@@ -10333,5 +10333,77 @@
     "status": "pending",
     "createdAt": "2026-06-08T02:41:12.244Z",
     "updatedAt": "2026-06-08T02:41:12.244Z"
+  },
+  {
+    "supplier": "N",
+    "arriveDate": "2026-06-29",
+    "styleNo": "G737",
+    "qty": 75,
+    "colorName": "蓝褐条",
+    "sizeName": "M",
+    "status": "pending",
+    "id": "mq4nw51u40z4f",
+    "createdAt": "2026-06-08T03:39:06.258Z",
+    "updatedAt": "2026-06-08T03:39:06.258Z"
+  },
+  {
+    "supplier": "N",
+    "arriveDate": "2026-06-29",
+    "styleNo": "G737",
+    "qty": 75,
+    "colorName": "蓝褐条",
+    "sizeName": "L",
+    "status": "pending",
+    "id": "mq4nw51ubzcst",
+    "createdAt": "2026-06-08T03:39:06.258Z",
+    "updatedAt": "2026-06-08T03:39:06.258Z"
+  },
+  {
+    "supplier": "N",
+    "arriveDate": "2026-06-29",
+    "styleNo": "G737",
+    "qty": 75,
+    "colorName": "咖灰条",
+    "sizeName": "M",
+    "status": "pending",
+    "id": "mq4nw51ul8b74",
+    "createdAt": "2026-06-08T03:39:06.258Z",
+    "updatedAt": "2026-06-08T03:39:06.258Z"
+  },
+  {
+    "supplier": "N",
+    "arriveDate": "2026-06-29",
+    "styleNo": "G737",
+    "qty": 75,
+    "colorName": "咖灰条",
+    "sizeName": "L",
+    "status": "pending",
+    "id": "mq4nw51ut9qnz",
+    "createdAt": "2026-06-08T03:39:06.258Z",
+    "updatedAt": "2026-06-08T03:39:06.258Z"
+  },
+  {
+    "supplier": "N",
+    "arriveDate": "2026-06-29",
+    "styleNo": "G737",
+    "qty": 75,
+    "colorName": "蓝红条",
+    "sizeName": "M",
+    "status": "pending",
+    "id": "mq4nw51ug037n",
+    "createdAt": "2026-06-08T03:39:06.258Z",
+    "updatedAt": "2026-06-08T03:39:06.258Z"
+  },
+  {
+    "supplier": "N",
+    "arriveDate": "2026-06-29",
+    "styleNo": "G737",
+    "qty": 75,
+    "colorName": "蓝红条",
+    "sizeName": "L",
+    "status": "pending",
+    "id": "mq4nw51ugy9we",
+    "createdAt": "2026-06-08T03:39:06.258Z",
+    "updatedAt": "2026-06-08T03:39:06.258Z"
   }
 ]
