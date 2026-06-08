@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>到货期管理 v2</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' stop-color='%234f46e5'/><stop offset='100%25' stop-color='%23818cf8'/></linearGradient></defs><rect width='100' height='100' rx='22' fill='url(%23g)'/><path d='M30 65 L50 35 L70 65' stroke='white' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'/><circle cx='50' cy='30' r='5' fill='white'/><line x1='50' y1='30' x2='50' y2='72' stroke='white' stroke-width='3' stroke-dasharray='4 3'/></svg>">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%234f46e5'/%3E%3Cpath d='M30 65 L50 35 L70 65' stroke='white' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='50' cy='30' r='5' fill='white'/%3E%3Cline x1='50' y1='30' x2='50' y2='72' stroke='white' stroke-width='3' stroke-dasharray='4 3'/%3E%3C/svg%3E">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
   :root { --primary: #4f46e5; --primary-light: #818cf8; --bg: #f8fafc; --card: #ffffff; --text: #1e293b; --text-secondary: #64748b; --border: #e2e8f0; --danger: #ef4444; --success: #22c55e; --warning: #f59e0b; --radius: 12px; }
@@ -371,14 +371,16 @@ async function saveDataToRemote(data) {
 
   setSyncStatus('saving');
 
-  // 后台异步保存，不阻塞UI
   try {
-    var shaResp = await fetchWithTimeout(getApiUrl(), { headers: { 'Authorization': 'token ' + info.token } }, 10000);
-    if (shaResp.ok) {
-      var shaData = await shaResp.json();
-      dataSha = shaData.sha;
-    } else {
-      throw new Error('获取SHA失败(' + shaResp.status + ')');
+    // 如果已有SHA，直接PUT（省一次网络请求）
+    if (!dataSha) {
+      var shaResp = await fetchWithTimeout(getApiUrl(), { headers: { 'Authorization': 'token ' + info.token } }, 10000);
+      if (shaResp.ok) {
+        var shaData = await shaResp.json();
+        dataSha = shaData.sha;
+      } else {
+        throw new Error('获取SHA失败(' + shaResp.status + ')');
+      }
     }
 
     var jsonStr = JSON.stringify(data, null, 2);
@@ -392,8 +394,23 @@ async function saveDataToRemote(data) {
     }, 15000);
 
     if (!resp.ok) {
-      var errData = await resp.json().catch(function() { return {}; });
-      throw new Error(errData.message || '保存失败(' + resp.status + ')');
+      // SHA过期，重新获取再试一次
+      if (resp.status === 409 || resp.status === 422) {
+        var shaResp2 = await fetchWithTimeout(getApiUrl(), { headers: { 'Authorization': 'token ' + info.token } }, 10000);
+        if (shaResp2.ok) {
+          dataSha = (await shaResp2.json()).sha;
+          body.sha = dataSha;
+          resp = await fetchWithTimeout(getApiUrl(), {
+            method: 'PUT',
+            headers: { 'Authorization': 'token ' + info.token, 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+          }, 15000);
+        }
+      }
+      if (!resp.ok) {
+        var errData = await resp.json().catch(function() { return {}; });
+        throw new Error(errData.message || '保存失败(' + resp.status + ')');
+      }
     }
 
     var result = await resp.json();
@@ -404,6 +421,8 @@ async function saveDataToRemote(data) {
     console.error('保存失败:', err);
     showToast('同步失败: ' + err.message);
     setSyncStatus('error');
+    // 清除SHA，下次重新获取
+    dataSha = null;
     return false;
   }
 }
