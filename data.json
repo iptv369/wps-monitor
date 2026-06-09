@@ -8,9 +8,9 @@
     "arriveDate": "2026-06-15",
     "supplier": "N",
     "remark": "示例数据",
-    "status": "pending",
+    "status": "arrived",
     "createdAt": "2026-06-06T00:00:00.000Z",
-    "updatedAt": "2026-06-06T00:00:00.000Z"
+    "updatedAt": "2026-06-09T08:09:22.913Z"
   },
   {
     "id": "demo2",
