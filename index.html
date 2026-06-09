@@ -541,7 +541,9 @@ function _doRender() {
     var dateDisplay = group.date === '未设定' ? '未设定日期' : formatDate(group.date);
     var dayLabel = isToday ? ' 今天' : isOverdue ? ' 逾期' : '';
     var totalQty = 0;
-    for (var j = 0; j < group.items.length; j++) totalQty += (group.items[j].qty || 0);
+    var styleSet = {};
+    for (var j = 0; j < group.items.length; j++) { totalQty += (group.items[j].qty || 0); styleSet[group.items[j].styleNo || ''] = 1; }
+    var styleCount = Object.keys(styleSet).length;
 
     var collapsedClass = (searchQuery || expandedGroups[keys[gi]]) ? '' : ' collapsed';
     html += '<div class="date-group" data-group-key="' + escAttr(keys[gi]) + '">';
@@ -549,7 +551,7 @@ function _doRender() {
     html += '<span class="toggle-icon">▼</span>';
     html += '<span class="dot ' + dotClass + '"></span>';
     html += '<span class="date-text">' + escHtml(dateDisplay) + dayLabel + '</span>';
-    html += '<span class="date-meta">' + (group.supplier ? escHtml(group.supplier) + ' · ' : '') + group.items.length + '款 ' + totalQty + '件' + (group.remark ? ' · ' + escHtml(group.remark) : '') + '</span>';
+    html += '<span class="date-meta">' + (group.supplier ? escHtml(group.supplier) + ' · ' : '') + styleCount + '款 ' + totalQty + '件' + (group.remark ? ' · ' + escHtml(group.remark) : '') + '</span>';
     html += '</div>';
     html += '<div class="date-header-btns">';
     html += '<button type="button" class="btn-forward" data-date="' + escAttr(group.date) + '" data-supplier="' + escAttr(group.supplier||'') + '" data-remark="' + escAttr(group.remark||'') + '">转发</button>';
@@ -693,12 +695,14 @@ function forwardGroup(date, supplier, remark) {
   if (remark) text += '备注：' + remark + '\n';
   text += '\n';
   var totalQty = 0;
+  var fwdStyleSet = {};
   for (var j = 0; j < items.length; j++) {
     var it = items[j];
     text += it.styleNo + ' ' + (it.colorName||'') + ' ' + (it.sizeName||'') + ' ×' + it.qty + '\n';
     totalQty += (it.qty || 0);
+    fwdStyleSet[it.styleNo || ''] = 1;
   }
-  text += '\n共' + items.length + '款 ' + totalQty + '件';
+  text += '\n共' + Object.keys(fwdStyleSet).length + '款 ' + totalQty + '件';
 
   // 复制到剪贴板（微信最可靠的方式）
   copyText(text);
