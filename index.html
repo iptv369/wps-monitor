@@ -886,12 +886,42 @@ async function fetchJstPage(config, startDate, endDate, pageIndex) {
     '&version=' + encodeURIComponent(params.version) +
     '&sign=' + sign +
     '&biz=' + encodeURIComponent(biz);
-  var resp = await fetch('https://openapi.jushuitan.com/open/jushuitan/purchasebooking/query', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8' },
-    body: body
-  });
-  var data = await resp.json();
+  // 通过CORS代理请求聚水潭API（浏览器直接请求会被跨域拦截）
+  var apiUrl = 'https://openapi.jushuitan.com/open/jushuitan/purchasebooking/query';
+  var proxies = [
+    'https://corsproxy.io/?url=' + encodeURIComponent(apiUrl),
+    'https://api.allorigins.win/raw?url=' + encodeURIComponent(apiUrl),
+    apiUrl
+  ];
+  var data = null;
+  var lastError = null;
+  for (var pi = 0; pi < proxies.length; pi++) {
+    try {
+      var fetchOpts = {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8' },
+        body: body
+      };
+      // allorigins需要GET方式
+      if (proxies[pi].indexOf('allorigins') >= 0) {
+        fetchOpts = { method: 'GET' };
+        // 把body参数放到URL里
+        var sep = proxies[pi].indexOf('?') >= 0 ? '&' : '?';
+        proxies[pi] += sep + body;
+      }
+      var resp = await fetchWithTimeout(proxies[pi], fetchOpts, 15000);
+      if (resp.ok) {
+        data = await resp.json();
+        break;
+      }
+    } catch(e) {
+      lastError = e;
+      console.warn('代理' + (pi+1) + '失败:', e.message);
+    }
+  }
+  if (!data) {
+    throw new Error(lastError ? lastError.message : '未能连接聚水潭API，请检查网络');
+  }
   if (data.code !== 0) {
     throw new Error(data.msg || 'API错误 code:' + data.code);
   }
