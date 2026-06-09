@@ -161,6 +161,7 @@
 </div>
 
 <div class="toolbar" id="toolbar">
+  <button id="btnSyncJst" style="background:#4f46e5;color:white;border-color:#4f46e5;">从聚水潭同步</button>
   <button id="btnTemplate">下载模板</button>
   <button id="btnExport">导出Excel</button>
   <button id="btnImport">导入数据</button>
@@ -237,6 +238,20 @@
     <div class="form-group">
       <label>分支</label>
       <input type="text" id="branch" placeholder="main" value="main">
+    </div>
+    <hr style="margin:16px 0;border:none;border-top:1px solid var(--border)">
+    <div style="font-size:14px;font-weight:700;margin-bottom:10px">聚水潭API配置</div>
+    <div class="form-group">
+      <label>App Key</label>
+      <input type="text" id="jstAppKey" placeholder="聚水潭开放平台App Key" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label>App Secret</label>
+      <input type="password" id="jstAppSecret" placeholder="聚水潭开放平台App Secret">
+    </div>
+    <div class="form-group">
+      <label>Access Token</label>
+      <input type="password" id="jstAccessToken" placeholder="授权后获取的Access Token">
     </div>
     <button class="btn-submit" id="btnSaveSettings">保存设置</button>
   </div>
@@ -770,11 +785,206 @@ document.getElementById('btnCloseSettings').addEventListener('click', function()
 document.getElementById('modalOverlay').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
 document.getElementById('settingsOverlay').addEventListener('click', function(e) { if (e.target === this) document.getElementById('settingsOverlay').classList.remove('active'); });
 document.getElementById('btnRefresh').addEventListener('click', refreshData);
+
+// ===== 聚水潭API同步 =====
+async function syncFromJst() {
+  var config = getConfig();
+  if (!config.jstAppKey || !config.jstAppSecret || !config.jstAccessToken) {
+    showToast('请先在设置中填写聚水潭API配置');
+    document.getElementById('btnSettings').click();
+    return;
+  }
+  if (!config.token) {
+    showToast('请先配置GitHub Token才能保存同步数据');
+    return;
+  }
+  var btn = document.getElementById('btnSyncJst');
+  btn.disabled = true;
+  btn.textContent = '同步中...';
+  try {
+    var allItems = [];
+    var today = new Date();
+    // 每次查7天，查未来60天
+    for (var i = 0; i < 60; i += 7) {
+      var start = new Date(today);
+      start.setDate(start.getDate() + i);
+      var end = new Date(today);
+      end.setDate(end.getDate() + Math.min(i + 6, 59));
+      var startStr = start.toISOString().slice(0, 10);
+      var endStr = end.toISOString().slice(0, 10);
+      var pageItems = await fetchJstPage(config, startStr, endStr, 1);
+      allItems = allItems.concat(pageItems);
+      // 如果有更多页
+      var hasMore = pageItems.length > 0;
+      var pageNum = 2;
+      while (hasMore && pageNum <= 20) {
+        var moreItems = await fetchJstPage(config, startStr, endStr, pageNum);
+        if (moreItems.length === 0) { hasMore = false; }
+        else { allItems = allItems.concat(moreItems); pageNum++; }
+      }
+    }
+    if (allItems.length === 0) {
+      showToast('聚水潭没有查到预约入库数据');
+      return;
+    }
+    // 合并到现有数据：按 i_id+properties_value+plan_arrive_date+seller 去重
+    var existingKeys = {};
+    allData.forEach(function(item) {
+      var key = (item.styleNo || '') + '|' + (item.colorName || '') + '|' + (item.sizeName || '') + '|' + (item.arriveDate || '') + '|' + (item.supplier || '');
+      existingKeys[key] = item.id;
+    });
+    var newCount = 0;
+    var updateCount = 0;
+    allItems.forEach(function(item) {
+      var key = (item.styleNo || '') + '|' + (item.colorName || '') + '|' + (item.sizeName || '') + '|' + (item.arriveDate || '') + '|' + (item.supplier || '');
+      if (existingKeys[key]) {
+        // 更新数量
+        var existItem = allData.find(function(d) { return d.id === existingKeys[key]; });
+        if (existItem && existItem.qty !== item.qty) {
+          existItem.qty = item.qty;
+          updateCount++;
+        }
+      } else {
+        item.id = genId();
+        item.status = 'pending';
+        allData.push(item);
+        existingKeys[key] = item.id;
+        newCount++;
+      }
+    });
+    await optimisticSave(allData);
+    showToast('同步完成：新增' + newCount + '条，更新' + updateCount + '条');
+  } catch (err) {
+    console.error('聚水潭同步失败:', err);
+    showToast('同步失败: ' + (err.message || err));
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '从聚水潭同步';
+  }
+}
+
+async function fetchJstPage(config, startDate, endDate, pageIndex) {
+  var timestamp = Math.floor(Date.now() / 1000).toString();
+  var biz = JSON.stringify({ page_index: pageIndex, page_size: 50, start_time: startDate, end_time: endDate });
+  var params = {
+    app_key: config.jstAppKey,
+    access_token: config.jstAccessToken,
+    timestamp: timestamp,
+    charset: 'utf-8',
+    version: '2',
+    biz: biz
+  };
+  // 计算签名
+  var sortedKeys = Object.keys(params).sort();
+  var signStr = config.jstAppSecret;
+  sortedKeys.forEach(function(key) { signStr += key + params[key]; });
+  var sign = md5(signStr);
+  var body = 'app_key=' + encodeURIComponent(params.app_key) +
+    '&access_token=' + encodeURIComponent(params.access_token) +
+    '&timestamp=' + encodeURIComponent(params.timestamp) +
+    '&charset=' + encodeURIComponent(params.charset) +
+    '&version=' + encodeURIComponent(params.version) +
+    '&sign=' + sign +
+    '&biz=' + encodeURIComponent(biz);
+  var resp = await fetch('https://openapi.jushuitan.com/open/jushuitan/purchasebooking/query', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8' },
+    body: body
+  });
+  var data = await resp.json();
+  if (data.code !== 0) {
+    throw new Error(data.msg || 'API错误 code:' + data.code);
+  }
+  var items = [];
+  if (data.data && data.data.datas) {
+    data.data.datas.forEach(function(po) {
+      var date = (po.plan_arrive_date || '').slice(0, 10);
+      var supplier = po.seller || '';
+      var remark = po.remark || '';
+      var poStatus = po.status || '';
+      if (po.items && po.items.length > 0) {
+        po.items.forEach(function(sku) {
+          var colorSize = (sku.properties_value || '').split(';');
+          var color = colorSize[0] || '';
+          var size = colorSize[1] || '';
+          items.push({
+            styleNo: sku.i_id || '',
+            colorName: color,
+            sizeName: size,
+            qty: sku.qty || sku.plan_arrive_qty || 0,
+            arriveDate: date,
+            supplier: supplier,
+            remark: remark,
+            jstPoId: po.po_id || '',
+            jstStatus: poStatus
+          });
+        });
+      }
+    });
+  }
+  return items;
+}
+
+function md5(str) {
+  // 简易MD5实现
+  function md5cycle(x, k) {
+    var a = x[0], b = x[1], c = x[2], d = x[3];
+    a = ff(a, b, c, d, k[0], 7, -680876936); d = ff(d, a, b, c, k[1], 12, -389564586); c = ff(c, d, a, b, k[2], 17, 606105819); b = ff(b, c, d, a, k[3], 22, -1044525330);
+    a = ff(a, b, c, d, k[4], 7, -176418897); d = ff(d, a, b, c, k[5], 12, 1200080426); c = ff(c, d, a, b, k[6], 17, -1473231341); b = ff(b, c, d, a, k[7], 22, -45705983);
+    a = ff(a, b, c, d, k[8], 7, 1770035416); d = ff(d, a, b, c, k[9], 12, -1958414417); c = ff(c, d, a, b, k[10], 17, -42063); b = ff(b, c, d, a, k[11], 22, -1990404162);
+    a = ff(a, b, c, d, k[12], 7, 1804603682); d = ff(d, a, b, c, k[13], 12, -40341101); c = ff(c, d, a, b, k[14], 17, -1502002290); b = ff(b, c, d, a, k[15], 22, 1236535329);
+    a = gg(a, b, c, d, k[1], 5, -165796510); d = gg(d, a, b, c, k[6], 9, -1069501632); c = gg(c, d, a, b, k[11], 14, 643717713); b = gg(b, c, d, a, k[0], 20, -373897302);
+    a = gg(a, b, c, d, k[5], 5, -701558691); d = gg(d, a, b, c, k[10], 9, 38016083); c = gg(c, d, a, b, k[15], 14, -660478335); b = gg(b, c, d, a, k[4], 20, -405537848);
+    a = gg(a, b, c, d, k[9], 5, 568446438); d = gg(d, a, b, c, k[14], 9, -1019803690); c = gg(c, d, a, b, k[3], 14, -187363961); b = gg(b, c, d, a, k[8], 20, 1163531501);
+    a = gg(a, b, c, d, k[13], 5, -1444681467); d = gg(d, a, b, c, k[2], 9, -51403784); c = gg(c, d, a, b, k[7], 14, 1735328473); b = gg(b, c, d, a, k[12], 20, -1926607734);
+    a = hh(a, b, c, d, k[5], 4, -378558); d = hh(d, a, b, c, k[8], 11, -2022574463); c = hh(c, d, a, b, k[11], 16, 1839030562); b = hh(b, c, d, a, k[14], 23, -35309556);
+    a = hh(a, b, c, d, k[1], 4, -1530992060); d = hh(d, a, b, c, k[4], 11, 1272893353); c = hh(c, d, a, b, k[7], 16, -155497632); b = hh(b, c, d, a, k[10], 23, -1094730640);
+    a = hh(a, b, c, d, k[13], 4, 681279174); d = hh(d, a, b, c, k[0], 11, -358537222); c = hh(c, d, a, b, k[3], 16, -722521979); b = hh(b, c, d, a, k[6], 23, 76029189);
+    a = hh(a, b, c, d, k[9], 4, -640364487); d = hh(d, a, b, c, k[12], 11, -421815835); c = hh(c, d, a, b, k[15], 16, 530742520); b = hh(b, c, d, a, k[2], 23, -995338651);
+    a = ii(a, b, c, d, k[0], 6, -198630844); d = ii(d, a, b, c, k[7], 10, 1126891415); c = ii(c, d, a, b, k[14], 15, -1416354905); b = ii(b, c, d, a, k[5], 21, -57434055);
+    a = ii(a, b, c, d, k[12], 6, 1700485571); d = ii(d, a, b, c, k[3], 10, -1894986606); c = ii(c, d, a, b, k[10], 15, -1051523); b = ii(b, c, d, a, k[1], 21, -2054922799);
+    a = ii(a, b, c, d, k[8], 6, 1873313359); d = ii(d, a, b, c, k[15], 10, -30611744); c = ii(c, d, a, b, k[6], 15, -1560198380); b = ii(b, c, d, a, k[13], 21, 1309151649);
+    a = ii(a, b, c, d, k[4], 6, -145523070); d = ii(d, a, b, c, k[11], 10, -1120210379); c = ii(c, d, a, b, k[2], 15, 718787259); b = ii(b, c, d, a, k[9], 21, -343485551);
+    x[0] = add32(a, x[0]); x[1] = add32(b, x[1]); x[2] = add32(c, x[2]); x[3] = add32(d, x[3]);
+  }
+  function cmn(q, a, b, x, s, t) { a = add32(add32(a, q), add32(x, t)); return add32((a << s) | (a >>> (32 - s)), b); }
+  function ff(a, b, c, d, x, s, t) { return cmn((b & c) | ((~b) & d), a, b, x, s, t); }
+  function gg(a, b, c, d, x, s, t) { return cmn((b & d) | (c & (~d)), a, b, x, s, t); }
+  function hh(a, b, c, d, x, s, t) { return cmn(b ^ c ^ d, a, b, x, s, t); }
+  function ii(a, b, c, d, x, s, t) { return cmn(c ^ (b | (~d)), a, b, x, s, t); }
+  function md51(s) {
+    var n = s.length, state = [1732584193, -271733879, -1732584194, 271733878], i;
+    for (i = 64; i <= s.length; i += 64) { md5cycle(state, md5blk(s.substring(i - 64, i))); }
+    s = s.substring(i - 64);
+    var tail = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+    for (i = 0; i < s.length; i++) tail[i >> 2] |= s.charCodeAt(i) << ((i % 4) << 3);
+    tail[i >> 2] |= 0x80 << ((i % 4) << 3);
+    if (i > 55) { md5cycle(state, tail); tail = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]; }
+    tail[14] = n * 8;
+    md5cycle(state, tail);
+    return state;
+  }
+  function md5blk(s) {
+    var md5blks = [], i;
+    for (i = 0; i < 64; i += 4) { md5blks[i >> 2] = s.charCodeAt(i) + (s.charCodeAt(i + 1) << 8) + (s.charCodeAt(i + 2) << 16) + (s.charCodeAt(i + 3) << 24); }
+    return md5blks;
+  }
+  var hex_chr = '0123456789abcdef'.split('');
+  function rhex(n) { var s = '', j = 0; for (; j < 4; j++) s += hex_chr[(n >> (j * 8 + 4)) & 0x0f] + hex_chr[(n >> (j * 8)) & 0x0f]; return s; }
+  function hex(x) { for (var i = 0; i < x.length; i++) x[i] = rhex(x[i]); return x.join(''); }
+  function add32(a, b) { return (a + b) & 0xFFFFFFFF; }
+  return hex(md51(str));
+}
+
+document.getElementById('btnSyncJst').addEventListener('click', syncFromJst);
 document.getElementById('btnSettings').addEventListener('click', function() {
   var config = getConfig();
   document.getElementById('repoUrl').value = config.repoUrl || '';
   document.getElementById('githubToken').value = config.token || '';
   document.getElementById('branch').value = config.branch || 'main';
+  document.getElementById('jstAppKey').value = config.jstAppKey || '';
+  document.getElementById('jstAppSecret').value = config.jstAppSecret || '';
+  document.getElementById('jstAccessToken').value = config.jstAccessToken || '';
   document.getElementById('settingsOverlay').classList.add('active');
 });
 document.getElementById('btnAddSku').addEventListener('click', function() { addSkuRow('', '', '', ''); });
@@ -932,7 +1142,14 @@ function normalizeDate(s) {
 }
 
 document.getElementById('btnSaveSettings').addEventListener('click', function() {
-  saveConfig({ repoUrl: document.getElementById('repoUrl').value.trim(), token: document.getElementById('githubToken').value.trim(), branch: document.getElementById('branch').value.trim() || 'main' });
+  saveConfig({
+    repoUrl: document.getElementById('repoUrl').value.trim(),
+    token: document.getElementById('githubToken').value.trim(),
+    branch: document.getElementById('branch').value.trim() || 'main',
+    jstAppKey: document.getElementById('jstAppKey').value.trim(),
+    jstAppSecret: document.getElementById('jstAppSecret').value.trim(),
+    jstAccessToken: document.getElementById('jstAccessToken').value.trim()
+  });
   canEdit = !!(getConfig().token);
   document.getElementById('settingsOverlay').classList.remove('active');
   showToast('设置已保存，正在重新加载...');
